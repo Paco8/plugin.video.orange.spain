@@ -1,0 +1,202 @@
+# XBMC Media Center language file
+# Addon Name: Orange
+# Addon id: plugin.video.orange
+# Addon version: 0.0.2
+# Addon Provider: Paco8
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: XBMC-Addons\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-12-28 16:47+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30001"
+msgid "Main"
+msgstr "Principal"
+
+msgctxt "#30002"
+msgid "Proxy"
+msgstr "Proxy"
+
+msgctxt "#30003"
+msgid "Experimental"
+msgstr "Experimental"
+
+msgctxt "#30010"
+msgid "DRM type"
+msgstr "Tipo de DRM"
+
+msgctxt "#30011"
+msgid "Manifest alteration"
+msgstr "Modificar manifiesto"
+
+msgctxt "#30012"
+msgid "Use proxy for license"
+msgstr "Usar proxy para la licencia"
+
+msgctxt "#30013"
+msgid "Use proxy for video"
+msgstr "Usar un proxy para el vídeo"
+
+msgctxt "#30014"
+msgid "Use proxy for audio"
+msgstr "Usar un proxy para el audio"
+
+msgctxt "#30015"
+msgid "Use proxy for subtitles"
+msgstr "Usar un proxy para los subtítulos"
+
+msgctxt "#30016"
+msgid "Proxy timeout (ms)"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Show only subscribed content"
+msgstr "Solo mostrar el contenido incluido en la suscripción"
+
+msgctxt "#30101"
+msgid "Menu"
+msgstr "Menú"
+
+msgctxt "#30102"
+msgid "My list"
+msgstr "Mi lista"
+
+msgctxt "#30103"
+msgid "Recordings"
+msgstr "Grabaciones"
+
+msgctxt "#30104"
+msgid "Live TV"
+msgstr "TV en directo"
+
+msgctxt "#30105"
+msgid "Movies"
+msgstr "Películas"
+
+msgctxt "#30106"
+msgid "TV shows"
+msgstr "Series"
+
+msgctxt "#30107"
+msgid "EPG"
+msgstr "Guía de programación"
+
+msgctxt "#30108"
+msgid "Manage devices"
+msgstr "Gestionar dispositivos"
+
+msgctxt "#30109"
+msgid "Next page"
+msgstr "Página siguiente"
+
+msgctxt "#30110"
+msgid "Previous page"
+msgstr "Página anterior"
+
+msgctxt "#30111"
+msgid "VOD"
+msgstr "TV a la carta"
+
+msgctxt "#30112"
+msgid "Search"
+msgstr "Búsqueda"
+
+msgctxt "#30113"
+msgid "New search"
+msgstr "Nueva búsqueda"
+
+msgctxt "#30114"
+msgid "Delete search"
+msgstr "Borrar búsqueda"
+
+msgctxt "#30115"
+msgid "Delete all searchs"
+msgstr "Borrar todas las búsquedas"
+
+msgctxt "#30116"
+msgid "Search term"
+msgstr "Término a buscar"
+
+msgctxt "#30117"
+msgid "Search results"
+msgstr "Resultados de la búsqueda"
+
+msgctxt "#30150"
+msgid "Close session"
+msgstr "Cerrar sesión"
+
+msgctxt "#30151"
+msgid "Delete device"
+msgstr "Eliminar dispositivo"
+
+msgctxt "#30152"
+msgid "Select device"
+msgstr "Seleccionar dispositivo"
+
+msgctxt "#30153"
+msgid "New device"
+msgstr "Nuevo dispositivo"
+
+msgctxt "#30154"
+msgid "Device name"
+msgstr "Nombre para el dispositivo"
+
+msgctxt "#30160"
+msgid "Accounts"
+msgstr "Cuentas"
+
+msgctxt "#30161"
+msgid "Add account"
+msgstr "Añadir cuenta"
+
+msgctxt "#30162"
+msgid "Remove account"
+msgstr "Borrar cuenta"
+
+msgctxt "#30163"
+msgid "Username"
+msgstr "Usuario"
+
+msgctxt "#30164"
+msgid "Password"
+msgstr "Clave"
+
+msgctxt "#30165"
+msgid "Select account"
+msgstr "Seleccionar cuenta"
+
+msgctxt "#30166"
+msgid "Login failed"
+msgstr "Error al iniciar sesión"
+
+msgctxt "#30167"
+msgid "Edit account"
+msgstr "Editar cuenta"
+
+msgctxt "#30170"
+msgid "Play from the beginning"
+msgstr "Ver desde el principio"
+
+msgctxt "#30171"
+msgid "Record program"
+msgstr "Grabar programa"
+
+msgctxt "#30172"
+msgid "Recording scheduled"
+msgstr "Grabación programada"
+
+msgctxt "#30173"
+msgid "Delete recording"
+msgstr "Borrar grabación"
+
+msgctxt "#30174"
+msgid "Do you want to delete {}?"
+msgstr "¿Quieres borrar {}?"
