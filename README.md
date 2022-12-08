@@ -22,3 +22,8 @@ Descarga `script.module.ttml2ssa-x.x.x.zip` y `plugin.video.orange.spain-x.x.x.z
 
 También es posible que tengas que instalar (o activar) el addon inputstream.adaptive.
 
+## Capturas de pantalla
+<img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen1.jpg" width="600"/>
+<img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen2.jpg" width="600"/>
+<img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen3.jpg" width="600"/>
+
