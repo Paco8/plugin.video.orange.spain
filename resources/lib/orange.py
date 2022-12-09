@@ -48,6 +48,9 @@ class Orange(object):
       # Cache
       self.cache = Cache(config_directory)
 
+      if not os.path.exists(config_directory + 'cache'):
+        os.makedirs(config_directory + 'cache')
+
       # Accounts
       data = self.cache.load_file('accounts.json')
       if data:
@@ -302,7 +305,7 @@ class Orange(object):
       return data
 
     def add_video_extra_info(self, id, t):
-      filename = 'INF_' + id + '.json'
+      filename = 'cache/INF_' + id + '.json'
       content = self.cache.load(filename)
       if content:
         data = json.loads(content)
@@ -380,7 +383,7 @@ class Orange(object):
       return res
 
     def add_recording_extra_info(self, id, t):
-      filename = 'RECINF_' + id + '.json'
+      filename = 'cache/RECINF_' + id + '.json'
       content = self.cache.load(filename)
       if content:
         data = json.loads(content)
@@ -511,13 +514,14 @@ class Orange(object):
     def get_category_list(self, id):
       res = []
 
-      content = self.cache.load(id + '.json')
+      filename = 'cache/CAT_' + id + '.json'
+      content = self.cache.load(filename)
       if content:
         data = json.loads(content)
       else:
         url = endpoints['get-unified-list'].format(external_category_id=id)
         data = self.load_json(url)
-        self.cache.save_file(id + '.json', json.dumps(data, ensure_ascii=False))
+        self.cache.save_file(filename, json.dumps(data, ensure_ascii=False))
 
       for d in data['response']:
         t = {}
