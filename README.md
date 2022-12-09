@@ -22,8 +22,11 @@ Descarga `script.module.ttml2ssa-x.x.x.zip` y `plugin.video.orange.spain-x.x.x.z
 
 También es posible que tengas que instalar (o activar) el addon inputstream.adaptive.
 
-## Configuración
+## Inicio de sesión
 Tras la instalación, la primera vez que entres en el addon tienes que ir a la opción `Cuentas` y añadir una cuenta nueva (te pedirá tu nombre de usuario y clave de Orange TV). Después vuelve al menú principal, y si las credenciales son correctas ya podrás empezar a disfrutar Orange TV en Kodi.
+
+## Dispositivos
+Orange TV solo permite 5 dispositivos. Como ese límite me parece excesivamente bajo, el addon puede funcionar usando el identificador de otro dispositivo existente, de modo que puedes tener el addon instalado en diferentes dispsitivos y solo contará como uno (o ninguno). En la opción `Gestionar dispositivos` puedes elegir qué dispositivo usar para el addon. Hay que tener en cuenta que solo unos cuantos permiten HD (SmartTV, FireTV y Chromecast). Por defecto el addon usará uno de esos dispositivos si ya tienes uno. Si no es así y hay menos de 5 dispositivos, creará automáticamente y usará un dispositivo SmartTV. Si ya había 5 entonces el addon usará el primer dispositivo que encuentre.
 
 ## Capturas de pantalla
 <img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen1.jpg" width="600"/>
