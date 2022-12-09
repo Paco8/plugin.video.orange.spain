@@ -37,6 +37,7 @@ El resto de opciones tratan de solucionar fallos en Kodi para que el addon funci
 - **`Modificar manifiesto`**: soluciona un fallo en `inputstream.adaptive` que impide reproducir canales en directo más de 1 minuto. Esta opción también es necesaria para las siguentes opciones.
 - **`Usar un proxy para el vídeo` / `Usar un proxy para el audio` / `Usar un proxy para los subtítulos`**: trata de solucionar parones en la reprodución en contenido de TV a la carta.
 - **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas. Esta opción modifica los subtítulos para que aparecan correctamente.
+- **Experimental: `Tipo de DRM`**: lo normal es dejarlo en `Widevine`. `Playready` de momento solo funciona en algunos dispositivos android.
 
 ## Capturas de pantalla
 <img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen1.jpg" width="600"/>
