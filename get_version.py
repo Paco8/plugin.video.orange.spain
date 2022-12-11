@@ -10,7 +10,7 @@ import re
 
 with io.open('addon.xml', 'r', encoding='utf-8') as handle:
   text = handle.read()
-  m = re.search(r'orange.*version="(.*?)"', text, re.DOTALL)
+  m = re.search(r'orange.*?version="(.*?)"', text, re.DOTALL)
   if m:
     print(m.group(1))
 
