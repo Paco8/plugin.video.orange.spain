@@ -35,8 +35,8 @@ El resto de opciones tratan de solucionar fallos en Kodi para que el addon funci
 
 - **`Usar proxy para la licencia`**: puede ser necesario en algunos dispositivos para poder reproducir canales en directo cuando se usa un dispositivo `Smartphone_Android` o `Tablet_Android`.
 - **`Modificar manifiesto`**: soluciona un fallo en `inputstream.adaptive` que impide reproducir canales en directo más de 1 minuto. Esta opción también es necesaria para las siguentes opciones.
-- **`Usar un proxy para el vídeo` / `Usar un proxy para el audio` / `Usar un proxy para los subtítulos`**: trata de solucionar parones en la reprodución en contenido de TV a la carta.
-- **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas. Esta opción modifica los subtítulos para que aparecan correctamente.
+- **`Usar un proxy para el vídeo / audio / subtítulos`**: trata de solucionar parones en la reprodución en contenido de TV a la carta.
+- **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas o mal alineados. Esta opción modifica los subtítulos para que aparecan correctamente.
 - **Experimental: `Tipo de DRM`**: lo normal es dejarlo en `Widevine`. `Playready` de momento solo funciona en algunos dispositivos android.
 
 ## Capturas de pantalla
