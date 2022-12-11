@@ -183,7 +183,11 @@ def add_videos(category, ctype, videos):
       list_item = xbmcgui.ListItem(label = title_name)
       list_item.setProperty('IsPlayable', 'true')
       list_item.setInfo('video', t['info'])
-      list_item.setArt(t['art'])
+
+      if t['info']['mediatype'] == 'episode':
+        list_item.setArt({'thumb': t['art']['thumb']})
+      else:
+        list_item.setArt(t['art'])
 
       url = get_url(action='play', id=t['id'], stype=t['stream_type'])
       if 'source_type' in t:

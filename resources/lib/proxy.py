@@ -42,6 +42,8 @@ ttml = Ttml2SsaAddon()
 ttml.ssa_timestamp_min_sep = 0
 
 session = requests.Session()
+session.headers.update({'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'})
+
 previous_token = ''
 manifest_base_url = ''
 stype = ''
@@ -96,11 +98,13 @@ def download_subs(url):
     lines = '<?xml version="1.0" encoding="utf-8"?><tt xml:lang="spa"><body><div>'
     for frag in range(0, len(fragments)):
       content = fragments[frag]
+      if not content: break
       pos = content.find(b'<?xml')
+      SLOG('frag: {}'.format(frag))
       if pos > -1:
         binary = content[0:pos]
         subtext = content[pos:]
-        LOG('frag: {}'.format(frag))
+        SLOG('frag: {} length: {}'.format(frag, len(subtext)))
 
         if subtext:
           ttml.shift = frag * 2000
@@ -148,6 +152,8 @@ def download_file(url, max_retries = 20, timeout = 2):
           return response.content
         else:
           SLOG('WARNING: status code: {}'.format(response.status_code))
+          if response.status_code == 404:
+            return None
         if response.content == None:
           SLOG('WARNING: response is empty')
       except:
@@ -164,8 +170,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         """Handle http get requests, used for manifest"""
         path = self.path  # Path with parameters received from request e.g. "/manifest?id=234324"
         SLOG('==== HTTP GET Request received to {}'.format(path))
-        try:
-        #if True:
+        #try:
+        if True:
             if 'manifest' in path:
               global video_timeout, audio_timeout, subs_timeout
               timeout = addon.getSettingInt('proxy_timeout') / 1000
@@ -246,18 +252,26 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
               elif addon.getSettingBool('proxy_audio') and 'audio' in path and stype == 'vod':
                 content = download_file(url, timeout=audio_timeout)
-                self.send_response(200)
-                self.send_header('Content-type', 'video/mp4')
-                self.end_headers()
-                self.wfile.write(content)
+                if not content:
+                  self.send_response(404)
+                  self.end_headers()
+                else:
+                  self.send_response(200)
+                  self.send_header('Content-type', 'video/mp4')
+                  self.end_headers()
+                  self.wfile.write(content)
                 SLOG('==== HTTP GET End Request {}'.format(path))
                 return
               elif addon.getSettingBool('proxy_video') and 'video' in path and stype == 'vod':
                 content = download_file(url, timeout=video_timeout)
-                self.send_response(200)
-                self.send_header('Content-type', 'video/mp4')
-                self.end_headers()
-                self.wfile.write(content)
+                if not content:
+                  self.send_response(404)
+                  self.end_headers()
+                else:
+                  self.send_response(200)
+                  self.send_header('Content-type', 'video/mp4')
+                  self.end_headers()
+                  self.wfile.write(content)
                 SLOG('==== HTTP GET End Request {}'.format(path))
                 return
 
@@ -269,9 +283,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             else:
               self.send_response(404)
               self.end_headers()
-        except Exception:
-            self.send_response(500)
-            self.end_headers()
+        #except Exception:
+        #    self.send_response(500)
+        #    self.end_headers()
 
 
     def do_POST(self):

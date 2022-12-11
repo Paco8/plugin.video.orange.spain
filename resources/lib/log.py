@@ -8,7 +8,7 @@ def LOG(message):
   try:
     import xbmc
     import xbmcaddon
-    xbmc.log('[{}] {}'.format(xbmcaddon.Addon().getAddonInfo('id'), message), xbmc.LOGINFO)
+    xbmc.log('[{}] {}'.format(xbmcaddon.Addon().getAddonInfo('id'), message), xbmc.LOGDEBUG)
   except:
     print(message)
 
