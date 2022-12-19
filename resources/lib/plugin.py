@@ -77,16 +77,32 @@ def play(params):
 
   except Exception as e:
     dialog = xbmcgui.Dialog()
-    dialog.notification('Error', str(e), xbmcgui.NOTIFICATION_ERROR, 5000)
+    dialog.notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
     return
 
-  certificate = 'CsECCAMSEBcFuRfMEgSGiwYzOi93KowYgrSCkgUijgIwggEKAoIBAQCZ7Vs7Mn2rXiTvw7YqlbWYUgrVvMs3UD4GRbgU2Ha430BRBEGtjOOtsRu4jE5yWl5KngeVKR1YWEAjp+GvDjipEnk5MAhhC28VjIeMfiG/+/7qd+EBnh5XgeikX0YmPRTmDoBYqGB63OBPrIRXsTeo1nzN6zNwXZg6IftO7L1KEMpHSQykfqpdQ4IY3brxyt4zkvE9b/tkQv0x4b9AsMYE0cS6TJUgpL+X7r1gkpr87vVbuvVk4tDnbNfFXHOggrmWEguDWe3OJHBwgmgNb2fG2CxKxfMTRJCnTuw3r0svAQxZ6ChD4lgvC2ufXbD8Xm7fZPvTCLRxG88SUAGcn1oJAgMBAAE6FGxpY2Vuc2Uud2lkZXZpbmUuY29tEoADrjRzFLWoNSl/JxOI+3u4y1J30kmCPN3R2jC5MzlRHrPMveoEuUS5J8EhNG79verJ1BORfm7BdqEEOEYKUDvBlSubpOTOD8S/wgqYCKqvS/zRnB3PzfV0zKwo0bQQQWz53ogEMBy9szTK/NDUCXhCOmQuVGE98K/PlspKkknYVeQrOnA+8XZ/apvTbWv4K+drvwy6T95Z0qvMdv62Qke4XEMfvKUiZrYZ/DaXlUP8qcu9u/r6DhpV51Wjx7zmVflkb1gquc9wqgi5efhn9joLK3/bNixbxOzVVdhbyqnFk8ODyFfUnaq3fkC3hR3f0kmYgI41sljnXXjqwMoW9wRzBMINk+3k6P8cbxfmJD4/Paj8FwmHDsRfuoI6Jj8M76H3CTsZCZKDJjM3BQQ6Kb2m+bQ0LMjfVDyxoRgvfF//M/EEkPrKWyU2C3YBXpxaBquO4C8A0ujVmGEEqsxN1HX9lu6c5OMm8huDxwWFd7OHMs3avGpr7RP7DUnTikXrh6X0'
+  # https://cps.purpledrm.com/wv_certificate/cert_license_widevine_com.bin
+  certificate = (
+     'CsECCAMSEBcFuRfMEgSGiwYzOi93KowYgrSCkgUijgIwggEKAoIBAQCZ7Vs7Mn2rXiTvw7YqlbWY'
+     'UgrVvMs3UD4GRbgU2Ha430BRBEGtjOOtsRu4jE5yWl5KngeVKR1YWEAjp+GvDjipEnk5MAhhC28V'
+     'jIeMfiG/+/7qd+EBnh5XgeikX0YmPRTmDoBYqGB63OBPrIRXsTeo1nzN6zNwXZg6IftO7L1KEMpH'
+     'SQykfqpdQ4IY3brxyt4zkvE9b/tkQv0x4b9AsMYE0cS6TJUgpL+X7r1gkpr87vVbuvVk4tDnbNfF'
+     'XHOggrmWEguDWe3OJHBwgmgNb2fG2CxKxfMTRJCnTuw3r0svAQxZ6ChD4lgvC2ufXbD8Xm7fZPvT'
+     'CLRxG88SUAGcn1oJAgMBAAE6FGxpY2Vuc2Uud2lkZXZpbmUuY29tEoADrjRzFLWoNSl/JxOI+3u4'
+     'y1J30kmCPN3R2jC5MzlRHrPMveoEuUS5J8EhNG79verJ1BORfm7BdqEEOEYKUDvBlSubpOTOD8S/'
+     'wgqYCKqvS/zRnB3PzfV0zKwo0bQQQWz53ogEMBy9szTK/NDUCXhCOmQuVGE98K/PlspKkknYVeQr'
+     'OnA+8XZ/apvTbWv4K+drvwy6T95Z0qvMdv62Qke4XEMfvKUiZrYZ/DaXlUP8qcu9u/r6DhpV51Wj'
+     'x7zmVflkb1gquc9wqgi5efhn9joLK3/bNixbxOzVVdhbyqnFk8ODyFfUnaq3fkC3hR3f0kmYgI41'
+     'sljnXXjqwMoW9wRzBMINk+3k6P8cbxfmJD4/Paj8FwmHDsRfuoI6Jj8M76H3CTsZCZKDJjM3BQQ6'
+     'Kb2m+bQ0LMjfVDyxoRgvfF//M/EEkPrKWyU2C3YBXpxaBquO4C8A0ujVmGEEqsxN1HX9lu6c5OMm'
+     '8huDxwWFd7OHMs3avGpr7RP7DUnTikXrh6X0')
 
   token = quote_plus(token)
 
   import inputstreamhelper
   is_helper = inputstreamhelper.Helper(manifest_type, drm='com.widevine.alpha')
-  if not is_helper: return
+  if not is_helper.check_inputstream():
+    xbmcgui.Dialog().notification(addon.getLocalizedString(30200), addon.getLocalizedString(30202), xbmcgui.NOTIFICATION_ERROR, 5000)
+    return
 
   play_item = xbmcgui.ListItem(path= playback_url)
   if format(addon.getSetting('drm_type')) == 'Playready':
@@ -114,8 +130,12 @@ def play(params):
   else:
     play_item.setProperty('inputstream', 'inputstream.adaptive')
 
-  play_item.setMimeType('application/dash+xml')
-  #play_item.setMimeType('application/vnd.ms-sstr+xml')
+  if manifest_type == 'mpd':
+    play_item.setMimeType('application/dash+xml')
+  elif manifest_type == 'hls':
+    play_item.setMimeType('application/x-mpegURL')
+  else:
+    play_item.setMimeType('application/vnd.ms-sstr+xml')
 
   # Add external subtitles
   if stype != 'tv' and 'slug' in params:
@@ -164,12 +184,11 @@ def add_videos(category, ctype, videos):
   xbmcplugin.setContent(_handle, ctype)
 
   if ctype == 'movies' or ctype == 'seasons':
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_UNSORTED)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_TITLE)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_GENRE)
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LASTPLAYED)
+    sort_methods = [xbmcplugin.SORT_METHOD_UNSORTED, xbmcplugin.SORT_METHOD_LABEL,
+                    xbmcplugin.SORT_METHOD_VIDEO_YEAR, xbmcplugin.SORT_METHOD_DATEADDED,
+                    xbmcplugin.SORT_METHOD_PLAYCOUNT, xbmcplugin.SORT_METHOD_LASTPLAYED]
+    for sort_method in sort_methods:
+      xbmcplugin.addSortMethod(_handle, sort_method)
   if ctype == 'episodes':
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_EPISODE)
 
@@ -231,18 +250,28 @@ def add_videos(category, ctype, videos):
 
   xbmcplugin.endOfDirectory(_handle)
 
-def list_vod():
-  # VOD List
-  xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30111)) # VOD
-  xbmcplugin.setContent(_handle, 'files')
+def open_folder(name, content_type = 'files'):
+  xbmcplugin.setPluginCategory(_handle, name)
+  xbmcplugin.setContent(_handle, content_type)
 
+def close_folder(updateListing=False, cacheToDisc=True):
+  xbmcplugin.endOfDirectory(_handle, updateListing=updateListing, cacheToDisc=cacheToDisc)
+
+def add_menu_option(title, url, context_menu = None, info = None, art = None):
+  list_item = xbmcgui.ListItem(label=title)
+  list_item.setInfo('video', info)
+  list_item.setArt(art)
+  if context_menu:
+    list_item.addContextMenuItems(context_menu)
+  xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
+
+def list_vod():
+  open_folder(addon.getLocalizedString(30111)) # VOD
   listing = o.main_listing()
   for l in listing:
     name = l['name'].encode('utf-8')
-    list_item = xbmcgui.ListItem(label=name)
-    xbmcplugin.addDirectoryItem(_handle, get_url(action='category', name=name, id=l['id']), list_item, True)
-
-  xbmcplugin.endOfDirectory(_handle)
+    add_menu_option(name, get_url(action='category', name=name, id=l['id']))
+  close_folder()
 
 def list_epg(params):
   LOG('list_epg: {}'.format(params))
@@ -250,15 +279,12 @@ def list_epg(params):
     add_videos(params['name'], 'movies', o.epg_to_movies(params['id']))
   else:
     channels = o.get_channels_list()
-    xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30107)) # EPG
-    xbmcplugin.setContent(_handle, 'files')
+    open_folder(addon.getLocalizedString(30107)) # EPG
     for t in channels:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       name = t['info']['title']
-      list_item = xbmcgui.ListItem(label=name)
-      list_item.setArt(t['art'])
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='epg', id=t['id'], name=name.encode('utf-8')), list_item, True)
-    xbmcplugin.endOfDirectory(_handle)
+      add_menu_option(name, get_url(action='epg', id=t['id'], name=name.encode('utf-8')), art=t['art'])
+    close_folder()
 
 def list_devices(params):
   LOG('list_devices: params: {}'.format(params))
@@ -279,13 +305,12 @@ def list_devices(params):
         try:
           o.register_device(name=name)
         except Exception as e:
-          xbmcgui.Dialog().notification('Error', str(e), xbmcgui.NOTIFICATION_ERROR, 5000)
+          xbmcgui.Dialog().notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
 
     xbmc.executebuiltin("Container.Refresh")
     return
 
-  xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30108)) # Devices
-  xbmcplugin.setContent(_handle, 'files')
+  open_folder(addon.getLocalizedString(30108)) # Devices
 
   for d in devices:
     resolution = 'HD' if d['type'] in o.hd_devices else 'SD'
@@ -293,21 +318,16 @@ def list_devices(params):
     if d['serial_number'] == o.device['id']:
       name = '[B][COLOR blue]' + name + '[/COLOR][/B]'
 
-    list_item = xbmcgui.ListItem(label=name)
     select_action = get_url(action='devices', id=d['serial_number'], name='select')
-    #LOG('select_action: {}'.format(select_action))
     remove_action = get_url(action='devices', id=d['serial_number'], name='delete')
-    #LOG('remove_action: {}'.format(remove_action))
-    list_item.addContextMenuItems([(addon.getLocalizedString(30152), "RunPlugin(" + select_action + ")"),
-                                   (addon.getLocalizedString(30151), "RunPlugin(" + remove_action + ")")])
-    xbmcplugin.addDirectoryItem(_handle, select_action, list_item, True)
+    cm = [(addon.getLocalizedString(30152), "RunPlugin(" + select_action + ")"),
+          (addon.getLocalizedString(30151), "RunPlugin(" + remove_action + ")")]
+    add_menu_option(name, select_action, cm)
 
   if len(devices) < 5:
-    list_item = xbmcgui.ListItem(label=addon.getLocalizedString(30153))
-    create_action = get_url(action='devices', name='create', id='0')
-    xbmcplugin.addDirectoryItem(_handle, create_action, list_item, True)
+    add_menu_option(addon.getLocalizedString(30153), get_url(action='devices', name='create', id='0')) # Add new
 
-  xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+  close_folder(cacheToDisc=False)
 
 def list_users(params):
   LOG('list_users: {}'.format(params))
@@ -339,26 +359,22 @@ def list_users(params):
         o.change_user(username)
     xbmc.executebuiltin("Container.Refresh")
   else:
-    xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30160)) # Change user
-    xbmcplugin.setContent(_handle, 'files')
+    open_folder(addon.getLocalizedString(30160)) # Change user
 
     for u in o.users:
       name = u['username']
       if u['username'] == o.username: name = '[COLOR blue]' + name + '[/COLOR]'
-      list_item = xbmcgui.ListItem(label=name)
 
       select_action = get_url(action='user', id=u['username'], name='select')
       remove_action = get_url(action='user', id=u['username'], name='delete')
       edit_action = get_url(action='user', id=u['username'], name='edit')
-      list_item.addContextMenuItems([(addon.getLocalizedString(30165), "RunPlugin(" + select_action + ")"),
-                                     (addon.getLocalizedString(30167), "RunPlugin(" + edit_action + ")"),
-                                     (addon.getLocalizedString(30162), "RunPlugin(" + remove_action + ")")])
-      xbmcplugin.addDirectoryItem(_handle, select_action, list_item, True)
+      cm = [(addon.getLocalizedString(30165), "RunPlugin(" + select_action + ")"),
+            (addon.getLocalizedString(30167), "RunPlugin(" + edit_action + ")"),
+            (addon.getLocalizedString(30162), "RunPlugin(" + remove_action + ")")]
+      add_menu_option(name, select_action, cm)
 
-    list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30161))
-    xbmcplugin.addDirectoryItem(_handle, get_url(action='user', name='new'), list_item, True)
-
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+    add_menu_option(addon.getLocalizedString(30161), get_url(action='user', name='new')) # Add new
+    close_folder(cacheToDisc=False)
 
 def search(params):
   search_term = params.get('search_term', None)
@@ -378,27 +394,23 @@ def search(params):
     xbmc.executebuiltin("Container.Refresh")
     return
 
-  xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30113)) # Search
-  xbmcplugin.setContent(_handle, 'files')
-
-  list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30113)) # New search
-  xbmcplugin.addDirectoryItem(_handle, get_url(action='search', name='new'), list_item, True)
+  open_folder(addon.getLocalizedString(30113)) # Search
+  add_menu_option(addon.getLocalizedString(30113), get_url(action='search', name='new')) # New search
 
   for i in o.search_list:
-    list_item = xbmcgui.ListItem(label=i.encode('utf-8'))
     remove_action = get_url(action='search', search_term=i, name='delete')
-    list_item.addContextMenuItems([(addon.getLocalizedString(30114), "RunPlugin(" + remove_action + ")")])
-    xbmcplugin.addDirectoryItem(_handle, get_url(action='search', search_term=i), list_item, True)
+    cm = [(addon.getLocalizedString(30114), "RunPlugin(" + remove_action + ")")]
+    add_menu_option(i.encode('utf-8'), get_url(action='search', search_term=i), cm)
 
-  xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+  close_folder(cacheToDisc=False)
 
 def order_recording(program_id):
   try:
     data = o.order_recording(program_id)
     if data['response']['status'] == 'SUCCESS':
-      xbmcgui.Dialog().notification('Info', addon.getLocalizedString(30172), xbmcgui.NOTIFICATION_INFO, 5000)
+      xbmcgui.Dialog().notification(addon.getLocalizedString(30201), addon.getLocalizedString(30172), xbmcgui.NOTIFICATION_INFO, 5000)
   except Exception as e:
-    xbmcgui.Dialog().notification('Error', str(e), xbmcgui.NOTIFICATION_ERROR, 5000)
+    xbmcgui.Dialog().notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
 
 def delete_recording(id, name):
   if sys.version_info[0] < 3:
@@ -428,13 +440,10 @@ def router(paramstring):
     elif params['action'] == 'wishlist':
       # Wishlist
       if not 'type' in params:
-        xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30102)) # Wishlist
-        xbmcplugin.setContent(_handle, 'files')
-        list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30105)) # Movies
-        xbmcplugin.addDirectoryItem(_handle, get_url(action='wishlist', type='movie'), list_item, True)
-        list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30106)) # Series
-        xbmcplugin.addDirectoryItem(_handle, get_url(action='wishlist', type='series'), list_item, True)
-        xbmcplugin.endOfDirectory(_handle)
+        open_folder(addon.getLocalizedString(30102)) # Wishlist
+        add_menu_option(addon.getLocalizedString(30105), get_url(action='wishlist', type='movie')) # Movies
+        add_menu_option(addon.getLocalizedString(30106), get_url(action='wishlist', type='series')) # Series
+        close_folder()
       else:
         wl = o.get_wishlist()
         l = []
@@ -471,44 +480,23 @@ def router(paramstring):
       raise ValueError('Invalid paramstring: {0}!'.format(paramstring))
   else:
     # Main
-    xbmcplugin.setPluginCategory(_handle, addon.getLocalizedString(30101)) # Menu
-    xbmcplugin.setContent(_handle, 'files')
+    open_folder(addon.getLocalizedString(30101)) # Menu
 
     if not o.logged:
-      xbmcgui.Dialog().notification('Error', addon.getLocalizedString(30166), xbmcgui.NOTIFICATION_ERROR, 5000) # Login failed
+      xbmcgui.Dialog().notification(addon.getLocalizedString(30200), addon.getLocalizedString(30166), xbmcgui.NOTIFICATION_ERROR, 5000) # Login failed
 
     if o.logged:
-      # TV
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30104)) # TV
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='tv'), list_item, True)
-
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30107)) # EPG
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='epg'), list_item, True)
-
-      # Wishlist folder
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30102)) # My list
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='wishlist'), list_item, True)
-
-      # Recordings folder
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30103)) # Recordings
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='recordings'), list_item, True)
-
-      # VOD
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30111)) # VOD
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='vod'), list_item, True)
-
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30112)) # Search
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='search'), list_item, True)
-
-      # Devices
-      list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30108)) # Devices
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='devices'), list_item, True)
+      add_menu_option(addon.getLocalizedString(30104), get_url(action='tv')) # TV
+      add_menu_option(addon.getLocalizedString(30107), get_url(action='epg')) # EGP
+      add_menu_option(addon.getLocalizedString(30102), get_url(action='wishlist')) # My list
+      add_menu_option(addon.getLocalizedString(30103), get_url(action='recordings')) # Recordings
+      add_menu_option(addon.getLocalizedString(30111), get_url(action='vod')) # VOD
+      add_menu_option(addon.getLocalizedString(30112), get_url(action='search')) # Search
+      add_menu_option(addon.getLocalizedString(30108), get_url(action='devices')) # Devices
 
     # Accounts
-    list_item = xbmcgui.ListItem(label= addon.getLocalizedString(30160)) # Accounts
-    xbmcplugin.addDirectoryItem(_handle, get_url(action='user'), list_item, True)
-
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+    add_menu_option(addon.getLocalizedString(30160), get_url(action='user')) # Accounts
+    close_folder()
 
 
 def run():

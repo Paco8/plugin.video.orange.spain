@@ -193,10 +193,32 @@ class Orange(object):
           break;
       return serial_number
 
+    def create_serial_number(self, device_type = 'SmartTV'):
+      def random_str(length=64):
+        import random
+        s = ''
+        for _ in range(0, length): s += random.choice('ABCDEF0123456789')
+        return s
+      def uuid_str():
+        import uuid
+        return str(uuid.uuid4()).upper()
+
+      serial_number = ''
+      if   device_type == 'SmartTV':
+        serial_number = 'OTVATV' + random_str()
+      elif device_type == 'FireTV':
+        serial_number = 'OTVAMZ' + random_str()
+      elif device_type in ['Smartphone_Android', 'Tablet_Android']:
+        serial_number = random_str(12) + '_' + uuid_str()
+      elif device_type == 'Chromecast':
+        serial_number = random_str(32)
+      else:
+        serial_number = uuid_str()
+      return serial_number
+
     def register_device(self, serial_number = None, name = None, device_type = 'SmartTV'):
       if not serial_number:
-        import uuid
-        serial_number = str(uuid.uuid4()).upper()
+        serial_number = self.create_serial_number(device_type)
       if not name:
         name = device_type +' '+ serial_number[:8]
       url = endpoints['register-terminal'].format(serial_number=serial_number, name=name, model_external_id=device_type)
@@ -592,7 +614,8 @@ class Orange(object):
         t['info']['title'] += ' [' + t['channel_name'] +'] ('+ t['start_date'] +')'
         if int(d['broadcastStartTime']) > (time.time() * 1000):
           t['info']['title'] = '[COLOR red]'+ t['info']['title'] +'[/COLOR]'
-        t['art'] = self.get_art(d['images'], 'url')
+        if 'images' in d:
+          t['art'] = self.get_art(d['images'], 'url')
         t['subscribed'] = self.is_subscribed_channel(d['externalChannelId'])
         res.append(t)
 
@@ -768,7 +791,7 @@ class Orange(object):
           ch['endDate'] = program['endDate']
 
     def get_subscribed_channels(self):
-      content = self.cache.load_file('subscribed_channels.json')
+      content = self.cache.load('subscribed_channels.json')
       if content:
         data = json.loads(content)
       else:
@@ -991,14 +1014,14 @@ class Orange(object):
       return identity
 
     def login(self):
-      if not self.username or not self.password:
-        return False
-
       # Load cookie from cache
       cookie = self.cache.load('cookie.conf')
       if cookie:
         self.cookie = cookie
         return True
+
+      if not self.username or not self.password:
+        return False
 
       # Get new cookie
       headers = self.net.headers.copy()

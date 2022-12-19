@@ -200,3 +200,15 @@ msgstr "Borrar grabación"
 msgctxt "#30174"
 msgid "Do you want to delete {}?"
 msgstr "¿Quieres borrar {}?"
+
+msgctxt "#30200"
+msgid "Error"
+msgstr "Error"
+
+msgctxt "#30201"
+msgid "Information"
+msgstr "Información"
+
+msgctxt "#30202"
+msgid "Inputstream.adaptive is not available"
+msgstr "Inputstream.adaptive no está disponible"

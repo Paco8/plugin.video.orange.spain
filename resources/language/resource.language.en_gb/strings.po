@@ -200,3 +200,15 @@ msgstr ""
 msgctxt "#30174"
 msgid "Do you want to delete {}?"
 msgstr ""
+
+msgctxt "#30200"
+msgid "Error"
+msgstr ""
+
+msgctxt "#30201"
+msgid "Information"
+msgstr ""
+
+msgctxt "#30202"
+msgid "Inputstream.adaptive is not available"
+msgstr ""
