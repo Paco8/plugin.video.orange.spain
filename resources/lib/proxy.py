@@ -49,9 +49,7 @@ manifest_base_url = ''
 stype = ''
 subtrack_ids = []
 
-video_timeout = 1.7
-audio_timeout = 1.7
-subs_timeout = 1
+timeout = 2
 
 save_log = True
 if save_log:
@@ -72,6 +70,10 @@ def SLOG(message):
     fh.write("\n")
 
 def download_subs(url):
+    def download(url):
+      data, _ = download_file(url, timeout=timeout)
+      return data
+
     # Sometimes kodi skips one fragment. It seems that loading
     # two fragments at a time solves the problem.
     fragments = []
@@ -85,13 +87,13 @@ def download_subs(url):
       new_url = url.replace('='+str(timestamp), '='+str(next_timestamp))
       LOG('new_url: {}'.format(new_url))
       if (seq % 2) == 0:
-        fragments.append(download_file(url, timeout=subs_timeout))
-        fragments.append(download_file(new_url, timeout=subs_timeout))
+        fragments.append(download(url))
+        fragments.append(download(new_url))
       else:
         content = ''
         SLOG('skipping {}'.format(timestamp))
     else:
-      fragments.append(download_file(url, timeout=subs_timeout))
+      fragments.append(download(url))
 
     LOG('number of fragments: {}'.format(len(fragments)))
 
@@ -140,29 +142,31 @@ def download_file(url, max_retries = 20, timeout = 2):
     if pos > -1: frag = url[pos:]
     SLOG('Downloading {}'.format(frag))
     t0 = time.time()
+
+    if timeout == 0:
+      response = session.get(url, allow_redirects=True)
+      SLOG('Downloaded  {} time: {} length: {}'.format(frag, time.time() - t0, len(response.content)))
+      return response.content, response.status_code
+
     retries = 0
     while retries < max_retries:
-      try:
-        url_t = url +'?_' + str(time.time()*1000)
-        response = session.get(url_t , allow_redirects=True, timeout = timeout)
-        if response.status_code == 200:
-          import hashlib
-          md5 = hashlib.md5(response.content).hexdigest()
-          SLOG('Downloaded  {} time: {} length: {} md5: {}'.format(frag, time.time() - t0, len(response.content), md5))
-          return response.content
-        else:
-          SLOG('WARNING: status code: {}'.format(response.status_code))
-          if response.status_code == 404:
-            return None
-        if response.content == None:
-          SLOG('WARNING: response is empty')
-      except:
-        pass
+      url_t = url +'?_' + str(time.time()*1000)
+      response = session.get(url_t, allow_redirects=True, timeout=timeout)
+      if response.status_code == 200:
+        SLOG('Downloaded  {} time: {} length: {}'.format(frag, time.time() - t0, len(response.content)))
+        return response.content, response.status_code
+      else:
+        SLOG('WARNING: status code: {}'.format(response.status_code))
+        if response.status_code == 404:
+          return response.content, response.status_code
+      if response.content == None:
+        SLOG('WARNING: response is empty')
       retries += 1
       time.sleep(0.1)
       SLOG('Retrying {} ({})'.format(url, retries))
+
     SLOG('Download failed: {}'.format(frag))
-    return None
+    return response.content, response.status_code
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -170,14 +174,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         """Handle http get requests, used for manifest"""
         path = self.path  # Path with parameters received from request e.g. "/manifest?id=234324"
         SLOG('==== HTTP GET Request received to {}'.format(path))
-        #try:
-        if True:
+        try:
+        #if True:
             if 'manifest' in path:
-              global video_timeout, audio_timeout, subs_timeout
+              global timeout
               timeout = addon.getSettingInt('proxy_timeout') / 1000
-              video_timeout = timeout
-              audio_timeout = timeout
-              subs_timeout = timeout
               LOG('proxy timeout: {}'.format(timeout))
 
               global stype
@@ -202,13 +203,6 @@ class RequestHandler(BaseHTTPRequestHandler):
               # Workaround for inputstream.adaptive bug #1064
               content = content.replace('IsLive="true"', 'IsLive="TRUE"')
 
-              # I have experienced freezes when playing VOD videos.
-              # Comparing with other manifests the only difference is "UTF-8" in upper case
-              # and no whitespace, so I'm changing that here, just in case.
-              content = content.replace('encoding="utf-8"', 'encoding="UTF-8"')
-              # Remove whitespace
-              content = " ".join(re.split("\s+", content, flags=re.UNICODE))
-
               # Find subtitles tracks
               matches = re.findall(r'<StreamIndex Type="text".*?Url="(.*?)"', content)
               LOG('matches: {}'.format(matches))
@@ -221,14 +215,13 @@ class RequestHandler(BaseHTTPRequestHandler):
               manifest_data = content
               self.send_response(200)
               self.send_header('Content-type', 'application/xml')
-              #self.send_header('Content-type', 'text/plain')
               self.end_headers()
               self.wfile.write(manifest_data.encode('utf-8'))
             elif 'QualityLevels' in path:
               url = manifest_base_url + path
               LOG('fragment url: {}'.format(url))
 
-              is_sub = True if 'textstream' in url else False
+              is_sub = ('textstream' in url)
               if not is_sub:
                 for sid in subtrack_ids:
                   if sid in url:
@@ -237,44 +230,22 @@ class RequestHandler(BaseHTTPRequestHandler):
               LOG('is_sub: {}'.format(is_sub))
               #is_sub = False
 
-              if addon.getSettingBool('proxy_subtitles') and is_sub:
-                if addon.getSettingBool('use_ttml2ssa'):
-                  content = download_subs(url)
-                else:
-                  content = download_file(url, timeout=subs_timeout)
+              if is_sub and addon.getSettingBool('use_ttml2ssa'):
+                content = download_subs(url)
                 self.send_response(200)
-                #self.send_header('Content-type', 'text/plain')
-                #self.send_header('Content-type', 'text/vtt')
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
                 self.wfile.write(content)
-                SLOG('==== HTTP GET End Request {}'.format(path))
+                SLOG('==== HTTP GET End Request {}, length: {}'.format(path, len(content)))
                 return
-              elif addon.getSettingBool('proxy_audio') and 'audio' in path and stype == 'vod':
-                content = download_file(url, timeout=audio_timeout)
-                if not content:
-                  self.send_response(404)
-                  self.end_headers()
-                else:
-                  self.send_response(200)
-                  self.send_header('Content-type', 'video/mp4')
-                  self.end_headers()
-                  self.wfile.write(content)
-                SLOG('==== HTTP GET End Request {}'.format(path))
+              if not is_sub and addon.getSettingBool('proxy_streams') and stype == 'vod':
+                content, status_code = download_file(url, timeout=timeout)
+                self.send_response(status_code)
+                self.send_header('Content-type', 'video/mp4')
+                self.end_headers()
+                self.wfile.write(content)
+                SLOG('==== HTTP GET End Request {}, length: {}'.format(path, len(content)))
                 return
-              elif addon.getSettingBool('proxy_video') and 'video' in path and stype == 'vod':
-                content = download_file(url, timeout=video_timeout)
-                if not content:
-                  self.send_response(404)
-                  self.end_headers()
-                else:
-                  self.send_response(200)
-                  self.send_header('Content-type', 'video/mp4')
-                  self.end_headers()
-                  self.wfile.write(content)
-                SLOG('==== HTTP GET End Request {}'.format(path))
-                return
-
               # Redirect
               self.send_response(301)
               self.send_header('Location', url)
@@ -283,9 +254,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             else:
               self.send_response(404)
               self.end_headers()
-        #except Exception:
-        #    self.send_response(500)
-        #    self.end_headers()
+        except Exception:
+            self.send_response(500)
+            self.end_headers()
 
 
     def do_POST(self):
@@ -314,7 +285,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             LOG('previous_token: {}'.format(previous_token))
             if previous_token == token:
               LOG('duplicated token')
-              from orange import Orange
+              from .orange import Orange
               o = Orange(profile_dir)
               program_id = None if params['program_id'] == 'None' else params['program_id']
               _, token = o.get_playback_url(params['id'], params['stype'], program_id)

@@ -33,6 +33,8 @@ class Orange(object):
     device = {'id': '', 'type': 'SmartTV'}
     hd_devices = ['SmartTV', 'FireTV', 'Chromecast', 'AKS19']
 
+    add_extra_info = True
+
     def __init__(self, config_directory):
       # Network
       headers = {
@@ -372,10 +374,11 @@ class Orange(object):
           t['subscribed'] = len(data['availabilities']) > 0
         elif t['stream_type'] == 'u7d':
           t['subscribed'] = self.is_subscribed_channel(data['sourceChannelId'])
-        try:
-          self.add_video_extra_info(data['externalContentId'], t)
-        except:
-          pass
+        if self.add_extra_info:
+          try:
+            self.add_video_extra_info(data['externalContentId'], t)
+          except:
+            pass
         t['slug'] = self.create_slug(t['info']['title'])
       elif data['contentType'] == 'Season':
         t['type'] = 'series'
@@ -434,6 +437,7 @@ class Orange(object):
       for d in data['response']:
         t = {}
         t['info'] = {}
+        t['art'] = {}
         t['type'] = 'movie'
         t['stream_type'] = 'rec'
         t['info']['title'] = d['name']
@@ -450,7 +454,8 @@ class Orange(object):
         if d['startDate'] > (time.time() * 1000):
           t['info']['title'] += ' ('+ t['start_date'] +')'
           t['info']['title'] = '[COLOR red]'+ t['info']['title'] +'[/COLOR]'
-        self.add_recording_extra_info(d['programExternalId'], t)
+        if self.add_extra_info:
+          self.add_recording_extra_info(d['programExternalId'], t)
         t['info']['plot'] += '\n[COLOR blue]Exp: ' + t['end_date'] + '[/COLOR]'
 
         res.append(t)
@@ -641,7 +646,8 @@ class Orange(object):
           t['info']['year'] = d['year']
           t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
           t['art'] = self.get_art(d['images'], 'url')
-          self.add_video_extra_info(d['externalId'], t)
+          if self.add_extra_info:
+            self.add_video_extra_info(d['externalId'], t)
           t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
           res.append(t)
         elif d['contentType'] == 'season':
@@ -752,8 +758,12 @@ class Orange(object):
       #if stype == 'u7d': s += ' (U7D)'
       #elif stype == 'rec': s += ' (REC)'
 
-      if 'source_type' in title and title['source_type'] not in ['SmoothStreaming', 'MPEGDash']:
-        s += ' (*' + title['source_type'] + '*)'
+      source_type = title.get('source_type')
+      if source_type:
+        if source_type not in ['SmoothStreaming', 'MPEGDash', 'HLS']:
+          s += ' ('+ source_type + ')'
+        if source_type != 'SmoothStreaming':
+          s = '[COLOR blue]' + s +'[/COLOR]'
 
       color1 = 'yellow'
       color2 = 'red'
@@ -868,10 +878,18 @@ class Orange(object):
         t['info']['playcount'] = 1 # Set as watched
         t['subscribed'] = self.is_subscribed_channel(t['id'])
         t['source_type'] = d['sourceType']
-        #LOG(json.dumps(d, indent=4))
 
+        for f in d['extrafields']:
+          if f['name'] == 'externalStreamingUrl':
+            try:
+              pars = json.loads(f['value'])
+              if 'externalURL' in pars:
+                t['playback_url'] = pars['externalURL']
+              if 'provider_channel_params' in pars['params']['providerParams']:
+                t['playback_url'] += '?' + pars['params']['providerParams']['provider_channel_params']
+            except:
+              pass
         res.append(t)
-
       return res
 
     def get_channels_list_with_epg(self):
@@ -919,7 +937,8 @@ class Orange(object):
         t['startDate'] = p['startDate']
         t['endtDate'] = p['endDate']
         t['aired'] = aired
-        self.add_live_extra_info(t['program_id'], t)
+        if self.add_extra_info:
+          self.add_live_extra_info(t['program_id'], t)
         videos.append(t)
       return videos
 
@@ -999,6 +1018,7 @@ class Orange(object):
         LOG('**** data: {}'.format(data))
         playback_url = data['response']['playingUrl']
         token = data['response']['casToken']
+        source_type = data['response']['sourceType'];
       return playback_url, token
 
     def open_session(self, id):

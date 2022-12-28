@@ -33,6 +33,7 @@ import os.path
 from .log import LOG
 from .orange import Orange
 from .addon import *
+from .gui import *
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
@@ -45,39 +46,49 @@ def get_url(**kwargs):
 
 
 def play(params):
+  LOG('params: {}'.format(params))
+
   id = params['id']
   stype = params['stype']
   LOG('**** play: id: {} stype: {}'.format(id, stype))
 
   try:
+    manifest_type = 'ism'
+    if 'source_type' in params:
+      if   params['source_type'] == 'MPEGDash': manifest_type = 'mpd'
+      elif params['source_type'] == 'HLS':      manifest_type = 'hls'
+      if params['source_type'] in ['DVB-SI', 'IP']:
+        show_notification(addon.getLocalizedString(30203))
+        return
+    LOG('manifest_type: {}'.format(manifest_type))
+
+    if manifest_type == 'hls' and 'playback_url' in params:
+      play_item = xbmcgui.ListItem(path=params['playback_url'])
+      xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
+      return
+
     if stype == 'vod':
       if not o.check_video_in_ticket_list(id):
         data = o.order_video(id)
         LOG('**** data: {}'.format(data))
 
-    program_id = params['program_id'] if 'program_id' in params else None
+    program_id = params.get('program_id')
     playback_url, token = o.get_playback_url(id, stype, program_id)
 
-    manifest_type = 'ism'
-    if 'source_type' in params:
-      if   params['source_type'] == 'MPEGDash': manifest_type = 'mpd'
-      elif params['source_type'] == 'HLS':      manifest_type = 'hls'
-    LOG('manifest_type: {}'.format(manifest_type))
+    if addon.getSettingBool('force_hd'):
+      playback_url = playback_url.replace('dash_low.mpd', 'dash_high.mpd')
+      playback_url = playback_url.replace('mss_medium', 'mss_high')
+      #playback_url = playback_url.replace('Profil1', 'Profil2')
+      #playback_url = playback_url.replace('Profil3', 'Profil2')
 
     proxy = o.cache.load_file('proxy.conf')
-    #if stype == 'tv' and manifest_type == 'ism' and addon.getSettingBool('manifest_modification') and proxy:
     if manifest_type == 'ism' and addon.getSettingBool('manifest_modification') and proxy:
       playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
-
-    #if stype == 'tv':
-    #  response = o.session.get(playback_url)
-    #  playback_url = response.url
 
     LOG('**** url: {} token: {}'.format(playback_url, token))
 
   except Exception as e:
-    dialog = xbmcgui.Dialog()
-    dialog.notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
+    show_notification(str(e))
     return
 
   # https://cps.purpledrm.com/wv_certificate/cert_license_widevine_com.bin
@@ -101,7 +112,7 @@ def play(params):
   import inputstreamhelper
   is_helper = inputstreamhelper.Helper(manifest_type, drm='com.widevine.alpha')
   if not is_helper.check_inputstream():
-    xbmcgui.Dialog().notification(addon.getLocalizedString(30200), addon.getLocalizedString(30202), xbmcgui.NOTIFICATION_ERROR, 5000)
+    show_notification(addon.getLocalizedString(30202))
     return
 
   play_item = xbmcgui.ListItem(path= playback_url)
@@ -167,17 +178,6 @@ def play(params):
   xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
 
-def input_window(heading, text = '', hidden = False):
-  res = None
-  keyboard = xbmc.Keyboard(text)
-  keyboard.setHeading(heading)
-  keyboard.setHiddenInput(hidden)
-  keyboard.doModal()
-  if (keyboard.isConfirmed()):
-    res = keyboard.getText()
-  del keyboard
-  return res
-
 def add_videos(category, ctype, videos):
   #LOG("*** TEST category: {} ctype: {}".format(category.encode('utf-8'), ctype))
   xbmcplugin.setPluginCategory(_handle, category)
@@ -231,6 +231,9 @@ def add_videos(category, ctype, videos):
           action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'].encode('utf-8'))
           list_item.addContextMenuItems([(addon.getLocalizedString(30173), "RunPlugin(" + action + ")")])
 
+      if 'playback_url' in t:
+        url += '&playback_url=' + quote_plus(t['playback_url'])
+
       xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     elif t['type'] == 'series':
       list_item = xbmcgui.ListItem(label = title_name)
@@ -249,21 +252,6 @@ def add_videos(category, ctype, videos):
       xbmcplugin.addDirectoryItem(_handle, get_url(action='category', id=t['id'], name=title_name), list_item, True)
 
   xbmcplugin.endOfDirectory(_handle)
-
-def open_folder(name, content_type = 'files'):
-  xbmcplugin.setPluginCategory(_handle, name)
-  xbmcplugin.setContent(_handle, content_type)
-
-def close_folder(updateListing=False, cacheToDisc=True):
-  xbmcplugin.endOfDirectory(_handle, updateListing=updateListing, cacheToDisc=cacheToDisc)
-
-def add_menu_option(title, url, context_menu = None, info = None, art = None):
-  list_item = xbmcgui.ListItem(label=title)
-  list_item.setInfo('video', info)
-  list_item.setArt(art)
-  if context_menu:
-    list_item.addContextMenuItems(context_menu)
-  xbmcplugin.addDirectoryItem(_handle, url, list_item, True)
 
 def list_vod():
   open_folder(addon.getLocalizedString(30111)) # VOD
@@ -305,7 +293,7 @@ def list_devices(params):
         try:
           o.register_device(name=name)
         except Exception as e:
-          xbmcgui.Dialog().notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
+          show_notification(str(e)) # Error
 
     xbmc.executebuiltin("Container.Refresh")
     return
@@ -408,9 +396,9 @@ def order_recording(program_id):
   try:
     data = o.order_recording(program_id)
     if data['response']['status'] == 'SUCCESS':
-      xbmcgui.Dialog().notification(addon.getLocalizedString(30201), addon.getLocalizedString(30172), xbmcgui.NOTIFICATION_INFO, 5000)
+      show_notification(addon.getLocalizedString(30172), xbmcgui.NOTIFICATION_INFO)
   except Exception as e:
-    xbmcgui.Dialog().notification(addon.getLocalizedString(30200), str(e), xbmcgui.NOTIFICATION_ERROR, 5000) # Error
+    show_notification(str(e))
 
 def delete_recording(id, name):
   if sys.version_info[0] < 3:
@@ -461,7 +449,11 @@ def router(paramstring):
     elif params['action'] == 'category':
       add_videos(params['name'], 'movies', o.get_category_list(params['id']))
     elif params['action'] == 'tv':
-      add_videos(addon.getLocalizedString(30104), 'movies', o.get_channels_list_with_epg())
+      if addon.getSettingBool('channels_with_epg'):
+        videos = o.get_channels_list_with_epg()
+      else:
+        videos = o.get_channels_list()
+      add_videos(addon.getLocalizedString(30104), 'movies', videos)
     elif params['action'] == 'vod':
       list_vod()
     elif params['action'] == 'user':
@@ -483,7 +475,7 @@ def router(paramstring):
     open_folder(addon.getLocalizedString(30101)) # Menu
 
     if not o.logged:
-      xbmcgui.Dialog().notification(addon.getLocalizedString(30200), addon.getLocalizedString(30166), xbmcgui.NOTIFICATION_ERROR, 5000) # Login failed
+      show_notification(addon.getLocalizedString(30166)) # Login failed
 
     if o.logged:
       add_menu_option(addon.getLocalizedString(30104), get_url(action='tv')) # TV
@@ -496,7 +488,7 @@ def router(paramstring):
 
     # Accounts
     add_menu_option(addon.getLocalizedString(30160), get_url(action='user')) # Accounts
-    close_folder()
+    close_folder(cacheToDisc=False)
 
 
 def run():
@@ -505,6 +497,7 @@ def run():
   global o
   o = Orange(profile_dir)
   #o.login()
+  o.add_extra_info = addon.getSettingBool('add_extra_info')
 
   # Call the router function and pass the plugin call parameters to it.
   # We use string slicing to trim the leading '?' from the plugin call paramstring

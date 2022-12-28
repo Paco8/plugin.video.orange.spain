@@ -42,24 +42,32 @@ msgid "Use proxy for license"
 msgstr "Usar proxy para la licencia"
 
 msgctxt "#30013"
-msgid "Use proxy for video"
-msgstr "Usar un proxy para el vídeo"
-
-msgctxt "#30014"
-msgid "Use proxy for audio"
-msgstr "Usar un proxy para el audio"
-
-msgctxt "#30015"
-msgid "Use proxy for subtitles"
-msgstr "Usar un proxy para los subtítulos"
+msgid "Use proxy for video/audio streams"
+msgstr "Usar un proxy para vídeo y audio"
 
 msgctxt "#30016"
 msgid "Proxy timeout (ms)"
-msgstr ""
+msgstr "Tiempo de espera (ms)"
 
 msgctxt "#30017"
 msgid "Show only subscribed content"
 msgstr "Solo mostrar el contenido incluido en la suscripción"
+
+msgctxt "#30018"
+msgid "Try to play HD in SD devices"
+msgstr "Intentar reproducir en HD en dispositivos SD"
+
+msgctxt "#30019"
+msgid "Configure InputStream Adaptive"
+msgstr "Configurar InputStream Adaptive"
+
+msgctxt "#30020"
+msgid "Add EPG info to TV channels"
+msgstr "Mostrar el programa en emisión en los canales de TV"
+
+msgctxt "#30021"
+msgid "Download extra info (like posters, actors...)"
+msgstr "Descargar información extra (como posters, actores...)"
 
 msgctxt "#30101"
 msgid "Menu"
@@ -212,3 +220,7 @@ msgstr "Información"
 msgctxt "#30202"
 msgid "Inputstream.adaptive is not available"
 msgstr "Inputstream.adaptive no está disponible"
+
+msgctxt "#30203"
+msgid "Format not supported"
+msgstr "Formato no soportado"

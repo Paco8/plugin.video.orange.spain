@@ -42,15 +42,7 @@ msgid "Use proxy for license"
 msgstr ""
 
 msgctxt "#30013"
-msgid "Use proxy for video"
-msgstr ""
-
-msgctxt "#30014"
-msgid "Use proxy for audio"
-msgstr ""
-
-msgctxt "#30015"
-msgid "Use proxy for subtitles"
+msgid "Use proxy for video/audio streams"
 msgstr ""
 
 msgctxt "#30016"
@@ -59,6 +51,22 @@ msgstr ""
 
 msgctxt "#30017"
 msgid "Show only subscribed content"
+msgstr ""
+
+msgctxt "#30018"
+msgid "Try to play HD in SD devices"
+msgstr ""
+
+msgctxt "#30019"
+msgid "Configure InputStream Adaptive"
+msgstr ""
+
+msgctxt "#30020"
+msgid "Add EPG info to TV channels"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Download extra info (like posters, actors...)"
 msgstr ""
 
 msgctxt "#30101"
@@ -211,4 +219,8 @@ msgstr ""
 
 msgctxt "#30202"
 msgid "Inputstream.adaptive is not available"
+msgstr ""
+
+msgctxt "#30203"
+msgid "Format not supported"
 msgstr ""
