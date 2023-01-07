@@ -69,6 +69,30 @@ def SLOG(message):
       fh.write(message.decode('utf-8'))
     fh.write("\n")
 
+def download_file(url, timeout=5):
+  #SLOG('download_file: {}'.format(url))
+  if timeout == 0: timeout = None
+  retries = 0
+  while retries < 5:
+    url_t = url +'?_' + str(int(time.time()*1000)) if retries > 0 else url
+    #SLOG('url_t: {}'.format(url_t))
+    try:
+      response = session.get(url_t, allow_redirects=True, timeout=timeout)
+      if response.status_code == 200:
+        content_size = len(response.content)
+        content_length = int(response.headers.get("Content-Length", 0))
+        SLOG('content_size: {} content_length: {}'.format(content_size, content_length))
+        if content_size == content_length:
+          return response.content, response.status_code
+      else:
+        SLOG('status_code: {}'.format(response.status_code))
+    except Exception as e:
+      SLOG('exception error: {}'.format(str(e)))
+    retries += 1
+    SLOG('WARNING: download failed. Retrying ({})'.format(retries))
+    time.sleep(0.2)
+  return response.content, 200
+
 def download_subs(url):
     def download(url):
       data, _ = download_file(url, timeout=timeout)
@@ -136,37 +160,6 @@ def download_subs(url):
 
     return content
 
-def download_file(url, max_retries = 20, timeout = 2):
-    frag = url
-    pos = url.find('/Fragments')
-    if pos > -1: frag = url[pos:]
-    SLOG('Downloading {}'.format(frag))
-    t0 = time.time()
-
-    if timeout == 0:
-      response = session.get(url, allow_redirects=True)
-      SLOG('Downloaded  {} time: {} length: {}'.format(frag, time.time() - t0, len(response.content)))
-      return response.content, response.status_code
-
-    retries = 0
-    while retries < max_retries:
-      url_t = url +'?_' + str(time.time()*1000)
-      response = session.get(url_t, allow_redirects=True, timeout=timeout)
-      if response.status_code == 200:
-        SLOG('Downloaded  {} time: {} length: {}'.format(frag, time.time() - t0, len(response.content)))
-        return response.content, response.status_code
-      else:
-        SLOG('WARNING: status code: {}'.format(response.status_code))
-        if response.status_code == 404:
-          return response.content, response.status_code
-      if response.content == None:
-        SLOG('WARNING: response is empty')
-      retries += 1
-      time.sleep(0.1)
-      SLOG('Retrying {} ({})'.format(url, retries))
-
-    SLOG('Download failed: {}'.format(frag))
-    return response.content, response.status_code
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -238,7 +231,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(content)
                 SLOG('==== HTTP GET End Request {}, length: {}'.format(path, len(content)))
                 return
-              if not is_sub and addon.getSettingBool('proxy_streams') and stype == 'vod':
+              if addon.getSettingBool('proxy_streams') and stype == 'vod':
                 content, status_code = download_file(url, timeout=timeout)
                 self.send_response(status_code)
                 self.send_header('Content-type', 'video/mp4')

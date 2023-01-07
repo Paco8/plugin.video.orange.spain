@@ -622,6 +622,7 @@ class Orange(object):
         if 'images' in d:
           t['art'] = self.get_art(d['images'], 'url')
         t['subscribed'] = self.is_subscribed_channel(d['externalChannelId'])
+        t['slug'] = self.create_slug(t['info']['title'])
         res.append(t)
 
       return res
@@ -649,6 +650,7 @@ class Orange(object):
           if self.add_extra_info:
             self.add_video_extra_info(d['externalId'], t)
           t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
+          t['slug'] = self.create_slug(t['info']['title'])
           res.append(t)
         elif d['contentType'] == 'season':
           t['type'] = 'series'
@@ -913,6 +915,7 @@ class Orange(object):
     def epg_to_movies(self, channel_id):
       epg = self.get_epg()
       videos = []
+      if not channel_id in epg: return videos
       for p in epg[channel_id]:
         if sys.version_info[0] < 3:
           p['date_str'] = unicode(p['date_str'], 'utf-8')
