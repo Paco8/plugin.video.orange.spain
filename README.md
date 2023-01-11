@@ -1,6 +1,6 @@
 # Orange TV Spain for Kodi
 
-_This addon is not officially commissioned/supported by Orange. All product names, logos, and trademarks mentionned in this project are property of their respective owners._
+_This addon is not officially commissioned/supported by Orange. All product names, logos, and trademarks mentioned in this project are property of their respective owners._
 
 ## Description
 Watch live channels, recordings and video on demand content from Orange TV Spain in Kodi. Requires a subscription.
@@ -37,10 +37,10 @@ Orange TV solo permite 5 dispositivos. Como ese límite me parece excesivamente 
 
 El resto de opciones tratan de solucionar fallos en Kodi para que el addon funcione lo mejor posible.
 
-- **`Usar proxy para la licencia`**: puede ser necesario en algunos dispositivos para poder reproducir canales en directo cuando se usa un dispositivo `Smartphone_Android` o `Tablet_Android`.
 - **`Modificar manifiesto`**: soluciona un fallo en `inputstream.adaptive` que impide reproducir canales en directo más de 1 minuto. Esta opción también es necesaria para las siguentes opciones.
 - **`Solucionar parones en TV a la carta`**: trata de solucionar parones en la reprodución en contenido de TV a la carta.
 - **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas o mal alineados. Esta opción modifica los subtítulos para que aparecan correctamente.
+- **`Usar proxy para la licencia`**: puede ser necesario en algunos dispositivos para poder reproducir canales en directo cuando se usa un dispositivo `Smartphone_Android` o `Tablet_Android`.
 - **Experimental: `Tipo de DRM`**: lo normal es dejarlo en `Widevine`. `Playready` de momento solo funciona en algunos dispositivos android.
 
 ## Capturas de pantalla

@@ -51,7 +51,7 @@ subtrack_ids = []
 
 timeout = 2
 
-save_log = True
+save_log = False
 if save_log:
   import io
   fh = io.open(profile_dir + 'proxy.log', 'w', encoding='utf-8')

@@ -7,11 +7,11 @@
         <setting label="30019" type="action" id="is_settings" action="Addon.OpenSettings(inputstream.adaptive)" enable="System.HasAddon(inputstream.adaptive)" option="close"/>
     </category>
     <category label="30002">
-        <setting label="30012" type="bool" id="use_proxy_for_license" default="false"/>
         <setting label="30011" type="bool" id="manifest_modification" default="true"/>
         <setting label="30013" type="bool" id="proxy_streams" default="true" enable="eq(-1,true)"/>
         <setting id="use_ttml2ssa" type="bool" label="$ADDON[script.module.ttml2ssa 32202]" default="true" enable="eq(-2,true)"/>
-        <setting label="30016" type="number" id="proxy_timeout" default="2000" enable="eq(-3,true)"/>
+        <setting label="30016" type="number" id="proxy_timeout" default="3000" enable="eq(-3,true)" visible="false"/>
+        <setting label="30012" type="bool" id="use_proxy_for_license" default="false"/>
     </category>
     <category label="30003">
         <setting label="30010" type="labelenum" id="drm_type" values="Widevine|Playready"/>

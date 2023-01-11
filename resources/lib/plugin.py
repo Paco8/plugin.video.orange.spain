@@ -198,6 +198,10 @@ def add_videos(category, ctype, videos):
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       t['info']['title'] = o.colorize_title(t)
     title_name = t['info']['title'].encode('utf-8')
+
+    if sys.version_info[0] < 3: # Kodi 18
+      if 'aired' in t['info']: t['info']['aired'] = None
+
     if t['type'] == 'movie':
       list_item = xbmcgui.ListItem(label = title_name)
       list_item.setProperty('IsPlayable', 'true')
