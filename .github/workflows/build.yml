@@ -15,7 +15,6 @@ jobs:
       
       - name: Build package
         run: |
-          cd plugin.video.orange.spain
           make
           wget https://github.com/Paco8/plugin.video.orange.spain/releases/download/v0.4.0/script.module.ttml2ssa-0.3.8.zip
 
