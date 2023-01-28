@@ -20,7 +20,7 @@ El addon es compatible con Kodi 18, 19 y 20.
 ## Instalación
 Descarga `script.module.ttml2ssa-x.x.x.zip` y `plugin.video.orange.spain-x.x.x.zip` de [la página Releases](https://github.com/Paco8/plugin.video.orange.spain/releases) e instálalos en Kodi en ese orden.
 
-También es posible que tengas que instalar (o activar) el addon inputstream.adaptive.
+También puedes instalarlo más fácilmente usando [este repositorio](https://github.com/Paco8/kodi-repo/raw/master/mini-repo/repository.spain/repository.spain-1.0.0.zip).
 
 ## Inicio de sesión
 Tras la instalación, la primera vez que entres en el addon tienes que ir a la opción `Cuentas` y añadir una cuenta nueva (te pedirá tu nombre de usuario y clave de Orange TV). Después vuelve al menú principal, y si las credenciales son correctas ya podrás empezar a disfrutar Orange TV en Kodi.
