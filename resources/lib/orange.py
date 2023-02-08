@@ -9,19 +9,18 @@ import io
 import os
 import requests
 import json
-import base64
 import re
 import time
 
+from .b64 import encode_base64, decode_base64
 from .log import LOG, print_json
 from .network import Network
 from .cache import Cache
+from .timeconv import *
 from .endpoints import *
 
 def date2str(timestamp, format='%d/%m/%Y %H:%M:%S'):
-  from datetime import datetime
-  time = datetime.fromtimestamp(timestamp / 1000)
-  return time.strftime(format)
+  return timestamp2str(timestamp, format)
 
 class Orange(object):
     username = ''
@@ -121,7 +120,7 @@ class Orange(object):
           return
 
     def add_user(self, username, password):
-      u = {'username': username, 'password': base64.b64encode(password.encode('utf-8')).decode('utf-8')}
+      u = {'username': username, 'password': encode_base64(password)}
       self.users.append(u)
       self.cache.save_file('accounts.json', json.dumps(self.users, ensure_ascii=False))
 
@@ -633,6 +632,7 @@ class Orange(object):
       services = "SVODORANGESERIES,SVODTEMATIC,SVODCANAL+Series,SVODFLIXOLE,SVODSTARZPLAY,SVODCAZA,SVODCLUB,SVODMUSICA,SVODINFANTIL,SVODDEPORTES,SVODLIFESTYLE,SVODMOTOR,SVODFRANCES,SVODANIMACION,SVODLIGA,SVODBEIN"
       url = endpoints['search-vod'].format(text=search_term, content_type=content_type, services=services)
       data = self.load_json(url)
+      #print_json(data)
 
       for d in data['response']:
         t = {}
@@ -640,16 +640,19 @@ class Orange(object):
         t['art'] = {}
         if d['contentType'] == 'movie':
           t['type'] = 'movie'
-          t['stream_type'] = 'vod'
           t['info']['mediatype'] = 'movie'
           t['id'] = d['availabilities'][0]['externalId']
+          t['stream_type'] = 'u7d' if t['id'].startswith('U7D') else 'vod'
           t['info']['title'] = d['name']
           t['info']['year'] = d['year']
           t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
           t['art'] = self.get_art(d['images'], 'url')
           if self.add_extra_info:
             self.add_video_extra_info(d['externalId'], t)
-          t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
+          if t['stream_type'] == 'vod':
+            t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
+          elif t['stream_type'] == 'u7d':
+            t['subscribed'] = self.is_subscribed_channel(d['sourceChannelId'])
           t['slug'] = self.create_slug(t['info']['title'])
           res.append(t)
         elif d['contentType'] == 'season':
@@ -726,11 +729,9 @@ class Orange(object):
           program = {}
           program['startDate'] = p['startDate']
           program['endDate'] = p['endDate']
-          time = datetime.fromtimestamp(program['startDate'] / 1000)
-          program['start_str'] = time.strftime("%H:%M")
-          program['date_str'] = time.strftime("%a %d %H:%M")
-          time = datetime.fromtimestamp(program['endDate'] / 1000)
-          program['end_str'] = time.strftime("%H:%M")
+          program['start_str'] = date2str(program['startDate'], "%H:%M")
+          program['date_str'] = date2str(program['startDate'], "%a %d %H:%M")
+          program['end_str'] = date2str(program['endDate'], "%H:%M")
           program['name'] = p['name']
           descs = program['name'].split(' - ')
           program['desc1'] = descs[0]
@@ -1050,13 +1051,8 @@ class Orange(object):
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
 
-      if sys.version_info[0] < 3:
-        p = base64.b64decode(bytes(self.password))
-      else:
-        p = base64.b64decode(bytes(self.password, encoding='ascii')).decode('ascii')
-
       url = API_RTV + 'Login?client=json&username=' + self.username
-      data = {'username': self.username, 'password': p}
+      data = {'username': self.username, 'password': decode_base64(self.password)}
       response = self.net.session.post(url, data = data)
       content = response.content.decode('utf-8')
       #LOG(content)
@@ -1117,18 +1113,14 @@ class Orange(object):
       self.cache.save_file('searchs.json', json.dumps(self.search_list, ensure_ascii=False))
 
     def delete_search(self, search_term):
-      nl = []
-      if search_term:
-        for s in self.search_list:
-          if s != search_term: nl.append(s)
-      self.search_list = nl
+      self.search_list = [s for s in self.search_list if s != search_term]
       self.cache.save_file('searchs.json', json.dumps(self.search_list, ensure_ascii=False))
 
     def main_listing(self):
       return ({'name': 'AMC+', 'id': 'AMC_PLUS_10002'},
               {'name': 'AMC Selekt', 'id': 'AMC_10002'},
               {'name': 'Universal+', 'id': 'UNIV_10000'},
-              {'name': 'Canal Series', 'id': 'SED_15696'},
+              #{'name': 'Canal Series', 'id': 'SED_15696'},
               {'name': 'AXN Now', 'id': 'SED_14876'},
               {'name': 'TNT Now', 'id': 'TNT_10002'},
               {'name': 'Foxnow', 'id': 'SED_15416'},

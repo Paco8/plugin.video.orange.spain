@@ -29,11 +29,12 @@ import os
 import requests
 import threading
 import socket
-import base64
 import re
 import time
 import sys
 from contextlib import closing
+
+from .b64 import encode_base64
 from .addon import addon, profile_dir
 from .log import LOG
 
@@ -271,7 +272,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             length = int(self.headers.get('content-length', 0))
             isa_data = self.rfile.read(length)
             LOG('isa_data length: {}'.format(length))
-            LOG('isa_data: {}'.format(base64.b64encode(isa_data)))
+            LOG('isa_data: {}'.format(encode_base64(isa_data)))
 
             token = params['token']
             LOG('token: {}'.format(token))
@@ -290,7 +291,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             response = session.post(url, data=isa_data)
             license_data = content= response.content
             LOG('license response length: {}'.format(len(license_data)))
-            LOG('license response: {}'.format(base64.b64encode(license_data)))
+            LOG('license response: {}'.format(encode_base64(license_data)))
 
             self.send_response(200)
             self.end_headers()

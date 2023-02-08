@@ -12,6 +12,7 @@ import xbmcplugin
 if sys.version_info[0] >= 3:
   import urllib.request as urllib2
   from urllib.parse import urlencode, parse_qsl, quote_plus
+  unicode = str
 else:
   import urllib2
   from urllib import urlencode, quote_plus
@@ -40,10 +41,11 @@ _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
 
-
 def get_url(**kwargs):
+  for key, value in kwargs.items():
+    if isinstance(value, unicode):
+      kwargs[key] = value.encode('utf-8')
   return '{0}?{1}'.format(_url, urlencode(kwargs))
-
 
 def play(params):
   LOG('params: {}'.format(params))
@@ -179,7 +181,7 @@ def play(params):
 
 
 def add_videos(category, ctype, videos):
-  #LOG("*** TEST category: {} ctype: {}".format(category.encode('utf-8'), ctype))
+  #LOG("*** TEST category: {} ctype: {}".format(category, ctype))
   xbmcplugin.setPluginCategory(_handle, category)
   xbmcplugin.setContent(_handle, ctype)
 
@@ -197,7 +199,7 @@ def add_videos(category, ctype, videos):
     if 'subscribed' in t:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       t['info']['title'] = o.colorize_title(t)
-    title_name = t['info']['title'].encode('utf-8')
+    title_name = t['info']['title']
 
     if sys.version_info[0] < 3: # Kodi 18
       if 'aired' in t['info']: t['info']['aired'] = None
@@ -232,7 +234,7 @@ def add_videos(category, ctype, videos):
           list_item.addContextMenuItems([play_from_beginning_action, record_program_action])
 
       if t['stream_type'] == 'rec':
-          action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'].encode('utf-8'))
+          action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'])
           list_item.addContextMenuItems([(addon.getLocalizedString(30173), "RunPlugin(" + action + ")")])
 
       if 'playback_url' in t:
@@ -261,7 +263,7 @@ def list_vod():
   open_folder(addon.getLocalizedString(30111)) # VOD
   listing = o.main_listing()
   for l in listing:
-    name = l['name'].encode('utf-8')
+    name = l['name']
     add_menu_option(name, get_url(action='category', name=name, id=l['id']))
   close_folder()
 
@@ -275,7 +277,7 @@ def list_epg(params):
     for t in channels:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       name = t['info']['title']
-      add_menu_option(name, get_url(action='epg', id=t['id'], name=name.encode('utf-8')), art=t['art'])
+      add_menu_option(name, get_url(action='epg', id=t['id'], name=name), art=t['art'])
     close_folder()
 
 def list_devices(params):
@@ -371,6 +373,8 @@ def list_users(params):
 def search(params):
   search_term = params.get('search_term', None)
   if search_term:
+    if sys.version_info[0] < 3:
+      search_term = search_term.decode('utf-8')
     if params.get('name', None) == 'delete':
       o.delete_search(search_term)
       xbmc.executebuiltin("Container.Refresh")
@@ -382,6 +386,8 @@ def search(params):
   if params.get('name', None) == 'new':
     search_term = input_window(addon.getLocalizedString(30116)) # Search term
     if search_term:
+      if sys.version_info[0] < 3:
+        search_term = search_term.decode('utf-8')
       o.add_search(search_term)
     xbmc.executebuiltin("Container.Refresh")
     return
