@@ -256,8 +256,9 @@ class Orange(object):
       import unicodedata
       nfkd = unicodedata.normalize('NFKD', name)
       t = nfkd.encode('ASCII', 'ignore').lower()
+      t = t.decode('utf-8')
       t = re.sub(r'\W+', '-', t).strip('-')
-      return t.decode('utf-8')
+      return t
 
     def find_cover(self, images):
       cover = ''
