@@ -256,13 +256,7 @@ class Orange(object):
       import unicodedata
       nfkd = unicodedata.normalize('NFKD', name)
       t = nfkd.encode('ASCII', 'ignore').lower()
-      t = t.replace(b' ', b'-')
-      t = t.replace(b'/', b'_')
-      t = t.replace(b'!', b'_')
-      t = t.replace(b':', b'_')
-      t = t.replace(b'.', b'_')
-      t = t.replace(b',', b'_')
-      t = t.replace(b'\'', b'_')
+      t = re.sub(r'\W+', '-', t).strip('-')
       return t.decode('utf-8')
 
     def find_cover(self, images):
@@ -1004,11 +998,11 @@ class Orange(object):
       token = None
       if stype == 'vod':
         data = self.get_video_playback_url(id)
-        LOG('**** data: {}'.format(data))
+        LOG('data: {}'.format(data))
         playback_url = data['response']['url']
         token = data['response']['token']
         license_url = data['response']['license_url']
-        LOG('**** license_url: {}'.format(license_url))
+        LOG('license_url: {}'.format(license_url))
       else:
         if stype == 'rec':
           data = self.get_recording_playback_url(id)
@@ -1019,7 +1013,7 @@ class Orange(object):
             data = self.get_tv_playback_url(id)
         elif stype == 'u7d':
           data = self.get_u7d_playback_url(id)
-        LOG('**** data: {}'.format(data))
+        LOG('data: {}'.format(data))
         playback_url = data['response']['playingUrl']
         token = data['response']['casToken']
         source_type = data['response']['sourceType'];

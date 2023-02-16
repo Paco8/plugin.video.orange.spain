@@ -52,7 +52,7 @@ def play(params):
 
   id = params['id']
   stype = params['stype']
-  LOG('**** play: id: {} stype: {}'.format(id, stype))
+  LOG('play: id: {} stype: {}'.format(id, stype))
 
   try:
     manifest_type = 'ism'
@@ -72,7 +72,7 @@ def play(params):
     if stype == 'vod':
       if not o.check_video_in_ticket_list(id):
         data = o.order_video(id)
-        LOG('**** data: {}'.format(data))
+        LOG('data: {}'.format(data))
 
     program_id = params.get('program_id')
     playback_url, token = o.get_playback_url(id, stype, program_id)
@@ -87,7 +87,7 @@ def play(params):
     if manifest_type == 'ism' and addon.getSettingBool('manifest_modification') and proxy:
       playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
 
-    LOG('**** url: {} token: {}'.format(playback_url, token))
+    LOG('url: {} token: {}'.format(playback_url, token))
 
   except Exception as e:
     show_notification(str(e))
@@ -162,7 +162,7 @@ def play(params):
       subfolder = ''
       subfilter = '{}.*\.(srt|ssa)'.format(slug)
 
-    LOG('**** subfolder: {} subfilter: {}'.format(subfolder, subfilter))
+    LOG('subfolder: {} subfilter: {}'.format(subfolder, subfilter))
     subfiles = []
     subfolder = '{}orange/{}'.format(translatePath('special://subtitles'), subfolder)
     LOG('subfolder: {}'.format(subfolder))
@@ -173,7 +173,7 @@ def play(params):
       for file in os.listdir(subfolder):
         if re.search(subfilter, file):
           subfiles.append(subfolder + file)
-    LOG('**** subs: {}'.format(subfiles))
+    LOG('subs: {}'.format(subfiles))
     play_item.setSubtitles(subfiles)
 
   play_item.setContentLookup(False)
@@ -181,7 +181,7 @@ def play(params):
 
 
 def add_videos(category, ctype, videos):
-  #LOG("*** TEST category: {} ctype: {}".format(category, ctype))
+  #LOG("category: {} ctype: {}".format(category, ctype))
   xbmcplugin.setPluginCategory(_handle, category)
   xbmcplugin.setContent(_handle, ctype)
 
@@ -195,7 +195,7 @@ def add_videos(category, ctype, videos):
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_EPISODE)
 
   for t in videos:
-    #LOG("*** TEST t: {}".format(t))
+    #LOG("t: {}".format(t))
     if 'subscribed' in t:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       t['info']['title'] = o.colorize_title(t)
@@ -502,7 +502,7 @@ def router(paramstring):
 
 
 def run():
-  LOG('**** drm_type: {}'.format(addon.getSetting('drm_type')))
+  LOG('drm_type: {}'.format(addon.getSetting('drm_type')))
 
   global o
   o = Orange(profile_dir)
