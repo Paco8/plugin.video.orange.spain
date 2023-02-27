@@ -7,6 +7,7 @@ from __future__ import unicode_literals, absolute_import, division
 import io
 import os
 import time
+import glob
 import sys
 
 class Cache(object):
@@ -39,3 +40,24 @@ class Cache(object):
     filename = self.config_directory + filename
     if os.path.exists(filename):
       os.remove(filename)
+
+  def clear_config(self):
+    types = ('*.conf', '*.json')
+    files = []
+    for ext in types:
+      files.extend(glob.glob(self.config_directory + ext))
+    for filename in files:
+      os.remove(filename)
+
+  def clear_cache(self, days=10):
+    from datetime import datetime
+    deleted = 0
+    files = glob.glob(os.path.join(self.config_directory + 'cache', '*.json'))
+    now = datetime.now()
+    for filename in files:
+      modified_time = datetime.fromtimestamp(os.path.getmtime(filename))
+      time_diff = now - modified_time
+      if time_diff.days > days:
+        os.remove(filename)
+        deleted += 1
+    return deleted

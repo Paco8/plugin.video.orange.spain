@@ -32,7 +32,7 @@ class Orange(object):
     device = {'id': '', 'type': 'SmartTV'}
     hd_devices = ['SmartTV', 'FireTV', 'Chromecast', 'AKS19']
 
-    add_extra_info = True
+    add_extra_info = False
 
     def __init__(self, config_directory):
       # Network
@@ -322,7 +322,22 @@ class Orange(object):
       data = self.load_json(url)
       return data
 
-    def add_video_extra_info(self, id, t):
+    def add_video_extra_info(self, t):
+      try:
+        if not 'info' in t: t['info'] = {}
+        if not 'art' in t: t['art'] = {}
+        if not ('info_id' in t and 'stream_type' in t): return
+
+        if t['stream_type'] == 'rec':
+          self.add_recording_extra_info(t['info_id'], t)
+        elif t['stream_type'] == 'tv':
+          self.add_live_extra_info(t['info_id'], t)
+        else:
+          self.add_vod_extra_info(t['info_id'], t)
+      except:
+        pass
+
+    def add_vod_extra_info(self, id, t):
       filename = 'cache/INF_' + id + '.json'
       content = self.cache.load(filename)
       if content:
@@ -333,8 +348,11 @@ class Orange(object):
         self.cache.save_file(filename, json.dumps(data, ensure_ascii=False))
 
       data = data['response']
-      #LOG(json.dumps(data, indent=4))
+      #print_json(data)
 
+      if not 'title' in t['info']: t['info']['title'] = data['name']
+      if len(t['art']) == 0:
+        t['art'] = self.get_art(data['attachments'])
       t['info']['duration'] = data['duration'] / 1000
       t['info']['plot'] = data['description']
       t['info']['year'] = data['year']
@@ -368,12 +386,10 @@ class Orange(object):
           t['subscribed'] = len(data['availabilities']) > 0
         elif t['stream_type'] == 'u7d':
           t['subscribed'] = self.is_subscribed_channel(data['sourceChannelId'])
-        if self.add_extra_info:
-          try:
-            self.add_video_extra_info(data['externalContentId'], t)
-          except:
-            pass
+        t['info_id'] = data['externalContentId']
         t['slug'] = self.create_slug(t['info']['title'])
+        if self.add_extra_info:
+          self.add_video_extra_info(t)
       elif data['contentType'] == 'Season':
         t['type'] = 'series'
         t['info']['title'] = data['seriesName']
@@ -413,6 +429,7 @@ class Orange(object):
 
       data = data['response'][0]
 
+      if not 'title' in t['info']: t['info']['title'] = data['name']
       t['art'] = self.get_art(data['attachments'])
       t['info']['plot'] = data['description']
       t['info']['year'] = data['year']
@@ -448,8 +465,9 @@ class Orange(object):
         if d['startDate'] > (time.time() * 1000):
           t['info']['title'] += ' ('+ t['start_date'] +')'
           t['info']['title'] = '[COLOR red]'+ t['info']['title'] +'[/COLOR]'
+        t['info_id'] = d['programExternalId']
         if self.add_extra_info:
-          self.add_recording_extra_info(d['programExternalId'], t)
+          self.add_video_extra_info(t)
         t['info']['plot'] += '\n[COLOR blue]Exp: ' + t['end_date'] + '[/COLOR]'
 
         res.append(t)
@@ -576,7 +594,8 @@ class Orange(object):
           t['info']['plot'] = d['description']
           t['info']['genre'] = self.get_genre(d['genreEntityList'])
           t['art'] = self.get_art(d['attachments'])
-          #self.add_video_extra_info(d['assetExternalId'], t)
+          t['info_id'] = d['assetExternalId']
+          # self.add_video_extra_info(t)
           t['subscribed'] = self.is_subscribed_vod(d['securityGroups'], 'externalId')
           t['slug'] = self.create_slug(t['info']['title'])
         else:
@@ -642,13 +661,14 @@ class Orange(object):
           t['info']['year'] = d['year']
           t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
           t['art'] = self.get_art(d['images'], 'url')
-          if self.add_extra_info:
-            self.add_video_extra_info(d['externalId'], t)
+          t['info_id'] = d['externalId']
           if t['stream_type'] == 'vod':
             t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
           elif t['stream_type'] == 'u7d':
             t['subscribed'] = self.is_subscribed_channel(d['sourceChannelId'])
           t['slug'] = self.create_slug(t['info']['title'])
+          if self.add_extra_info:
+            self.add_video_extra_info(t)
           res.append(t)
         elif d['contentType'] == 'season':
           t['type'] = 'series'
@@ -868,6 +888,7 @@ class Orange(object):
         t['id'] = d['id'] = d['externalChannelId']
         t['dial'] = d['number']
         t['info']['title'] = str(t['dial']) +'. '+ d['name']
+        t['channel_name'] = d['name']
         #t['slug'] = self.create_slug(t['info']['title'])
         for att in d['attachments']:
           if att['name'] == 'LOGO':
@@ -903,9 +924,12 @@ class Orange(object):
       #LOG(url)
       data = self.load_json(url)
       data = data['response']
+      if not 'title' in t['info']: t['info']['title'] = data['name']
+      t['info']['plot'] = data['description']
       t['info']['year'] = data['year']
-      t['info']['genre'] = self.get_genre(data['genreEntityList'])
       t['info']['director'], t['info']['cast'] = self.get_contributors(data['contributors'])
+      t['info']['country'] = self.get_country(data['countries'])
+      t['info']['genre'] = self.get_genre(data['genreEntityList'])
       t['art'] = self.get_art(data['attachments'])
 
     def epg_to_movies(self, channel_id):
@@ -936,8 +960,9 @@ class Orange(object):
         t['startDate'] = p['startDate']
         t['endtDate'] = p['endDate']
         t['aired'] = aired
+        t['info_id'] = t['program_id']
         if self.add_extra_info:
-          self.add_live_extra_info(t['program_id'], t)
+          self.add_video_extra_info(t)
         videos.append(t)
       return videos
 
@@ -1127,3 +1152,100 @@ class Orange(object):
               {'name': 'Películas', 'id': 'TVPLAY_14028'},
               #{'name': 'Películas U7D', 'id': 'TVPLAY_14028_ANT'},
               {'name': 'Películas U7D', 'id': 'U7D_14028'})
+
+    def export_channels(self):
+      if sys.version_info[0] >= 3:
+        from urllib.parse import urlencode
+      else:
+        from urllib import urlencode
+
+      channels = self.get_channels_list()
+      res = []
+      for c in channels:
+        if not c['subscribed']: continue
+        t = {}
+        t['name'] = c['channel_name']
+        t['id'] = c['id']
+        t['logo'] = c['art'].get('icon')
+        t['preset'] = c['dial']
+        t['stream'] = 'plugin://plugin.video.orange.spain/?action=play&id={}&stype=tv&source_type={}'.format(c['id'], c['source_type'])
+        if 'playback_url' in c:
+          t['stream'] += '&' + urlencode({'playback_url': c['playback_url']})
+        res.append(t)
+      return res
+
+    def export_epg(self):
+      res = {}
+      epg = self.get_epg()
+      channels = self.get_channels_list()
+      for channel in channels:
+        id = channel['id']
+        if not channel['subscribed'] or not id in epg: continue
+        res[id] = []
+        for e in epg[id]:
+          t = {}
+          t['title'] = e['desc1']
+          t['subtitle'] = e['desc2']
+          t['start'] = datetime.utcfromtimestamp(e['startDate']/1000).strftime('%Y-%m-%dT%H:%M:%SZ')
+          t['stop'] = datetime.utcfromtimestamp(e['endDate']/1000).strftime('%Y-%m-%dT%H:%M:%SZ')
+          t['description'] = e['description']
+          if 'art' in e:
+            t['image'] = e['art']['poster']
+          t['stream'] = 'plugin://plugin.video.orange.spain/?action=play&id={}&stype=tv&program_id={}'.format(id, e['program_id'])
+          res[id].append(t)
+      return res
+
+    def export_channels_to_m3u8(self, filename):
+      channels = self.export_channels()
+      items = []
+      for t in channels:
+        item = '#EXTINF:-1 tvg-name="{name}" tvg-id="{id}" tvg-logo="{logo}" tvg-chno="{preset}" group-title="Orange TV" catchup="vod",{name}\n{stream}\n\n'.format(
+            name=t['name'], id=t['id'], logo=t['logo'], preset=t['preset'], stream=t['stream'])
+        items.append(item)
+      res = '#EXTM3U\n## Orange TV\n{}'.format(''.join(items))
+      with io.open(filename, 'w', encoding='utf-8', newline='') as handle:
+        handle.write(res)
+
+    def export_epg_to_xml(self, filename):
+      channels = self.export_channels()
+      res = []
+      res.append('<?xml version="1.0" encoding="UTF-8"?>\n' + 
+                 '<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + 
+                 '<tv>\n')
+
+      for t in channels:
+        res.append('<channel id="{}">\n'.format(t['id']) + 
+                  '  <display-name>{}</display-name>\n'.format(t['name']) + 
+                  '  <icon src="{}"/>\n'.format(t['logo']) + 
+                  '</channel>\n')
+
+      epg = self.export_epg()
+      for ch in channels:
+        if not ch['id'] in epg: continue
+        for e in epg[ch['id']]:
+          start = datetime.strptime(e['start'], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y%m%d%H%M%S +0000")
+          stop = datetime.strptime(e['stop'], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y%m%d%H%M%S +0000")
+          url = e.get('stream', None)
+          if url:
+            url = url.replace('&', '&amp;')
+          res.append('<programme start="{}" stop="{}" channel="{}"'.format(start, stop, ch['id']) +
+                    (' catchup-id="{}"'.format(url) if url else "") +
+                    '>\n' +
+                    '  <title>{}</title>\n'.format(e['title']) +
+                    '  <sub-title>{}</sub-title>\n'.format(e['subtitle']))
+          if 'image' in e:
+            res.append('  <icon src="{}"/>\n'.format(e['image']))
+          if 'description' in e:
+            res.append('  <desc>{}</desc>\n'.format(e['description']))
+          if 'credits' in e and len(e['credits']) > 0:
+            res.append('  <credits>\n');
+            for c in e['credits']:
+              if c['type'] == 'director':
+                res.append('    <director>{}</director>\n'.format(c['name']))
+              elif c['type'] == 'actor':
+                res.append('    <actor>{}</actor>\n'.format(c['name']))
+            res.append('  </credits>\n');
+          res.append('</programme>\n')
+      res.append('</tv>\n')
+      with io.open(filename, 'w', encoding='utf-8', newline='') as handle:
+        handle.write(''.join(res))

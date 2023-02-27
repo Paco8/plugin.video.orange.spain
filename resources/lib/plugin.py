@@ -150,6 +150,22 @@ def play(params):
   else:
     play_item.setMimeType('application/vnd.ms-sstr+xml')
 
+  # Add info
+  LOG('******** params: {}'.format(params))
+  if addon.getSettingBool('add_extra_info'):
+    t = {'id': params['id'], 'stream_type': stype}
+    if 'info_id' in params:
+      t['info_id'] = params['info_id']
+    elif id.endswith("_PAGE_HD"):
+      t['info_id'] = id.rstrip("_PAGE_HD")
+    LOG('****** t: {}'.format(t))
+    if 'info_id' in t:
+      o.add_video_extra_info(t)
+      LOG('****** t: {}'.format(t))
+      play_item.setInfo('video', t['info'])
+      play_item.setArt(t['art'])
+    #return
+
   # Add external subtitles
   if stype != 'tv' and 'slug' in params:
     slug = params['slug']
@@ -223,6 +239,12 @@ def add_videos(category, ctype, videos):
         url += '&season=' + str(t['info']['season'])
       if 'episode' in t['info']:
         url += '&episode=' + str(t['info']['episode'])
+
+      info_id = t.get('info_id')
+      if not info_id and t['stream_type'] == 'tv' and 'program_id' in t:
+        info_id = t['program_id']
+      if info_id and t['stream_type'] != 'vod':
+        url += '&info_id=' + info_id
 
       if t['stream_type'] == 'tv' and 'program_id' in t:
         play_from_beginning_action = (addon.getLocalizedString(30170), "RunPlugin(" + url +'&menu=1&program_id=' +  t['program_id'] + ")")
@@ -418,6 +440,20 @@ def delete_recording(id, name):
     o.delete_recording(id)
     xbmc.executebuiltin("Container.Refresh")
 
+def iptv(params):
+  LOG('iptv: params: {}'.format(params))
+  if o.logged:
+    #try:
+    if True:
+      from .iptvmanager import IPTVManager
+      port = int(params['port'])
+      if params['action'] == 'iptv-channels':
+        IPTVManager(port).send_channels(o)
+      elif params['action'] == 'iptv-epg':
+        IPTVManager(port).send_epg(o)
+    #except:
+    #  pass
+
 def router(paramstring):
   """
   Router function that calls other functions
@@ -478,6 +514,8 @@ def router(paramstring):
       list_epg(params)
     elif params['action'] == 'delete_recording':
       delete_recording(params['id'], params['name'])
+    elif 'iptv' in params['action']:
+      iptv(params)
     else:
       raise ValueError('Invalid paramstring: {0}!'.format(paramstring))
   else:
@@ -509,6 +547,12 @@ def run():
   #o.login()
   o.add_extra_info = addon.getSettingBool('add_extra_info')
 
+  # Clear cache
+  LOG('Cleaning cache. {} files removed.'.format(o.cache.clear_cache()))
+
   # Call the router function and pass the plugin call parameters to it.
   # We use string slicing to trim the leading '?' from the plugin call paramstring
-  router(sys.argv[2][1:])
+  params = sys.argv[2][1:]
+  if '/iptv/channels' in sys.argv[0]: params += '&action=iptv-channels'
+  elif '/iptv/epg' in sys.argv[0]: params += '&action=iptv-epg'
+  router(params)

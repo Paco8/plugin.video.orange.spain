@@ -268,3 +268,47 @@ msgstr "Inputstream.adaptive no está disponible"
 msgctxt "#30203"
 msgid "Format not supported"
 msgstr "Formato no soportado"
+
+msgctxt "#30204"
+msgid "Video not available"
+msgstr "Vídeo no disponible"
+
+msgctxt "#30300"
+msgid "IPTV Manager"
+msgstr "IPTV Manager"
+
+msgctxt "#30301"
+msgid "Install IPTV Manager add-on"
+msgstr "Instalar IPTV Manager"
+
+msgctxt "#30302"
+msgid "Enable IPTV Manager integration"
+msgstr "Habilitar integración con IPTV Manager"
+
+msgctxt "#30303"
+msgid "IPTV Manager settings"
+msgstr "Opciones de IPTV Manager"
+
+msgctxt "#30305"
+msgid "Export channels and EPG for IPTV automatically"
+msgstr "Exportar automáticamente canales y guía para IPTV"
+
+msgctxt "#30306"
+msgid "Save to this folder (requires restart)"
+msgstr "Guardar en esta carpeta (requiere reinicio)"
+
+msgctxt "#30307"
+msgid "Install IPTV Simple add-on"
+msgstr "Instalar el addon IPTV Simple"
+
+msgctxt "#30308"
+msgid "Open IPTV Simple settings"
+msgstr "Abrir la configuración de IPTV Simple"
+
+msgctxt "#30310"
+msgid "Exporting channels"
+msgstr "Exportando canales"
+
+msgctxt "#30311"
+msgid "Exporting EPG"
+msgstr "Exportando guía"
