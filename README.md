@@ -57,7 +57,7 @@ Opcionalmente es posible configurar el plugin para IPTV. Esto permite ver los ca
 <img src="https://github.com/Paco8/plugin.video.orange.spain/raw/main/resources/screen5.jpg" width="600"/>
 
 A continuación van las instrucciones para configurarlo. Es necesario instalar el plugin `IPTV Simple Client`. Se encargará de mostrar los canales y la guía en el apartado TV de Kodi.
-Este plugin lo puedes encontrar en Addons, Mis addons, Clientes PVR, con el nombre **PVR IPTV Simple Client**. En el caso de que ya estuviera instalado pero desactivado hay que activarlo.
+Este plugin lo puedes encontrar en Addons, Instalar desde repositorio, Kodi addon repository, Clientes PVR, con el nombre **PVR IPTV Simple Client**. Si no está ahí es posible que ya esté instalado pero desactivado. En ese caso hay que ir a Mis addons, Clientes PVR y activarlo.
 
 Una vez instalado IPTV Simple Client vamos a los ajustes de Orange TV.
 
@@ -67,12 +67,12 @@ Una vez instalado IPTV Simple Client vamos a los ajustes de Orange TV.
 - Esperamos unos segundos hasta que aparezca una notificación en la parte superior izquierda indicando que Orange TV ha exportado los canales y la guía.
 - Entramos otra vez en los ajustes de Orange TV.
 - En la sección **IPTV** seleccionamos **Abrir la configuración de IPTV Simple**.
-- (**Kodi 20**) Seleccionamos "Añadir configuración de Addon". En nombre le ponemos por ejemplo `Orange TV`.
+- (**Kodi 20**) Seleccionamos "Añadir configuración de Addon". En la nueva ventana, en nombre le ponemos por ejemplo `Orange TV`.
 - En la nueva ventana que se abre seleccionamos en Ubicación "Local path".
 - En "Ruta a la lista M3U" nos vamos a la carpeta que habíamos elegido para exportar los datos de Orange TV y seleccionamos el fichero `orange-channels.m3u8`
 - Ahora vamos a la sección **EPG**, y en Ubicación seleccionamos "Local path".
 - En "Ruta XMLTV" nos vamos a la carpeta que habíamos elegido para exportar los datos de Orange TV y seleccionamos el fichero `orange-epg.xml`
-- (Opcionalmente) En la sección **Catchup** activamos la opción "Enable catchup".
+- (Opcionalmente) En la sección **Catchup** activamos la opción "Enable catchup". Esta opción nos permite ver programas ya emitidos.
 - Aceptamos los cambios.
 - (**Kodi 20**) Cuando vuelva a salir otra vez la ventana "Ajustes y configuraciones de Addon" pulsamos en Cancelar.
 - Reiniciamos Kodi.
