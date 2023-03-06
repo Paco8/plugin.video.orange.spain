@@ -164,6 +164,8 @@ def play(params):
       LOG('****** t: {}'.format(t))
       play_item.setInfo('video', t['info'])
       play_item.setArt(t['art'])
+      if 'mpaa' in t['info'] and addon.getSettingBool('age_rating'):
+        show_notification(addon.getLocalizedString(30320).format(t['info']['mpaa']), xbmcgui.NOTIFICATION_INFO)
     #return
 
   # Add external subtitles
@@ -454,6 +456,19 @@ def iptv(params):
     #except:
     #  pass
 
+def export_epg_now():
+  if not o.logged: return
+  folder = addon.getSetting('epg_folder')
+  if sys.version_info[0] > 2:
+    folder = bytes(folder, 'utf-8')
+  if not folder or not os.path.isdir(folder): return
+  channels_filename = os.path.join(folder, b"orange-channels.m3u8")
+  epg_filename = os.path.join(folder, b"orange-epg.xml")
+  show_notification(addon.getLocalizedString(30310), xbmcgui.NOTIFICATION_INFO)
+  o.export_channels_to_m3u8(channels_filename)
+  show_notification(addon.getLocalizedString(30311), xbmcgui.NOTIFICATION_INFO)
+  o.export_epg_to_xml(epg_filename)
+
 def router(paramstring):
   """
   Router function that calls other functions
@@ -464,6 +479,7 @@ def router(paramstring):
 
   params = dict(parse_qsl(paramstring))
   if params:
+    #LOG('params: {}'.format(params))
     if params['action'] == 'play':
       LOG('play: {}'.format(paramstring))
       if 'menu=1' in paramstring:
@@ -514,6 +530,8 @@ def router(paramstring):
       list_epg(params)
     elif params['action'] == 'delete_recording':
       delete_recording(params['id'], params['name'])
+    elif params['action'] == 'export_epg_now':
+      export_epg_now()
     elif 'iptv' in params['action']:
       iptv(params)
     else:

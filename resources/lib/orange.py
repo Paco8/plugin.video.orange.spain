@@ -359,6 +359,7 @@ class Orange(object):
       t['info']['director'], t['info']['cast'] = self.get_contributors(data['contributors'])
       t['info']['country'] = self.get_country(data['countries'])
       t['info']['genre'] = self.get_genre(data['genreEntityList'])
+      if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
 
     def get_title(self, data):
       t = {}
@@ -398,6 +399,8 @@ class Orange(object):
         t['art'] = self.get_art(data['seriesImages'])
         t['info']['plot'] = ''
 
+      if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
+      if 'rating' in data: t['info']['rating'] = data['rating']
       if t['id'] != '':
         t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
 
@@ -436,6 +439,7 @@ class Orange(object):
       t['info']['director'], t['info']['cast'] = self.get_contributors(data['contributors'])
       t['info']['country'] = self.get_country(data['countries'])
       t['info']['genre'] = self.get_genre(data['genreEntityList'])
+      if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
 
     def get_recordings(self):
       res = []
@@ -466,6 +470,7 @@ class Orange(object):
           t['info']['title'] += ' ('+ t['start_date'] +')'
           t['info']['title'] = '[COLOR red]'+ t['info']['title'] +'[/COLOR]'
         t['info_id'] = d['programExternalId']
+        if 'prName' in d: t['info']['mpaa'] = d['prName'].replace('ML_', '')
         if self.add_extra_info:
           self.add_video_extra_info(t)
         t['info']['plot'] += '\n[COLOR blue]Exp: ' + t['end_date'] + '[/COLOR]'
@@ -512,6 +517,7 @@ class Orange(object):
         t['info']['director'], t['info']['cast'] = self.get_contributors(d['contributors'])
         t['info']['country'] = self.get_country(d['countries'])
         t['info']['genre'] = self.get_genre(d['genres'])
+        if 'prName' in d: t['info']['mpaa'] = d['prName'].replace('ML_', '')
 
         res.append(t)
 
@@ -545,6 +551,7 @@ class Orange(object):
         t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
         t['slug'] = self.create_slug(t['info']['tvshowtitle'])
         t['subscribed'] = self.is_subscribed_vod(d['uniqueVideos'][0]['securityGroups'], 'externalId')
+        if 'prName' in d: t['info']['mpaa'] = d['prName'].replace('ML_', '')
 
         res.append(t)
 
@@ -602,6 +609,7 @@ class Orange(object):
           LOG('Unsupported template: {}'.format(d['template']))
           continue
 
+        if 'prName' in d: t['info']['mpaa'] = d['prName'].replace('ML_', '')
         t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
         res.append(t)
 
@@ -611,6 +619,7 @@ class Orange(object):
       res = []
       url = endpoints['search-live'].format(text=search_term, device_models=self.device['type'])
       data = self.load_json(url)
+      #print_json(data)
 
       for d in data['response']:
         t = {}
@@ -758,6 +767,10 @@ class Orange(object):
           program['program_id'] = p['referenceProgramId']
           program['id'] = p['id']
           program['channel_id'] = id
+          if 'genres' in p:
+            program['genres'] = []
+            for g in p['genres']:
+              program['genres'].append(g['name'])
           epg[id].append(program)
       return epg
 
@@ -931,6 +944,7 @@ class Orange(object):
       t['info']['country'] = self.get_country(data['countries'])
       t['info']['genre'] = self.get_genre(data['genreEntityList'])
       t['art'] = self.get_art(data['attachments'])
+      if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
 
     def epg_to_movies(self, channel_id):
       epg = self.get_epg()
@@ -1191,6 +1205,8 @@ class Orange(object):
           t['description'] = e['description']
           if 'art' in e:
             t['image'] = e['art']['poster']
+          if 'genres' in e:
+            t['genre'] = ', '.join(e['genres'])
           t['stream'] = 'plugin://plugin.video.orange.spain/?action=play&id={}&stype=tv&program_id={}'.format(id, e['program_id'])
           res[id].append(t)
       return res
@@ -1237,6 +1253,8 @@ class Orange(object):
             res.append('  <icon src="{}"/>\n'.format(e['image']))
           if 'description' in e:
             res.append('  <desc>{}</desc>\n'.format(e['description']))
+          if 'genre' in e:
+            res.append('  <category>{}</category>\n'.format(e['genre']))
           if 'credits' in e and len(e['credits']) > 0:
             res.append('  <credits>\n');
             for c in e['credits']:

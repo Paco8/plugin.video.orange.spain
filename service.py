@@ -18,7 +18,7 @@ def export_epg():
   def needs_update(filename):
     if os.path.exists(filename):
       file_modification_time = datetime.fromtimestamp(os.path.getmtime(filename))
-      return datetime.now() - file_modification_time > timedelta(hours=6)
+      return datetime.now() - file_modification_time > timedelta(hours=12)
     return True
 
   folder = addon.getSetting('epg_folder')
