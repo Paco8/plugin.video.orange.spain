@@ -686,7 +686,8 @@ class Orange(object):
           t['id'] = d['seriesExternalId']
           t['info']['year'] = d['year']
           t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
-          t['art'] = self.get_art(d['parentImages'], 'url')
+          if 'parentImages' in d:
+            t['art'] = self.get_art(d['parentImages'], 'url')
           t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
           """
           t['type'] = 'season'
@@ -965,7 +966,7 @@ class Orange(object):
         t['info']['plot'] = p['description']
         t['info']['duration'] = (p['endDate'] - p['startDate']) / 1000
         t['info']['mediatype'] = 'movie'
-        t['art'] = p['art']
+        t['art'] = p.get('art')
         t['program_id'] = p['program_id']
         t['is_catchup'] = True
         t['info']['playcount'] = 1 # Set as watched
