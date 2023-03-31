@@ -1,3 +1,6 @@
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Paco8/plugin.video.orange.spain)
+![GitHub all releases](https://img.shields.io/github/downloads/Paco8/plugin.video.orange.spain/total)
+
 # Orange TV Spain for Kodi
 
 _This addon is not officially commissioned/supported by Orange. All product names, logos, and trademarks mentioned in this project are property of their respective owners._
