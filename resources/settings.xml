@@ -12,6 +12,7 @@
         <setting label="30013" type="bool" id="proxy_streams" default="true" enable="eq(-1,true)" subsetting="true"/>
         <setting id="use_ttml2ssa" type="bool" label="$ADDON[script.module.ttml2ssa 32202]" default="true" enable="eq(-2,true)" subsetting="true"/>
         <setting label="30016" type="number" id="proxy_timeout" default="3000" enable="eq(-3,true)" visible="false" subsetting="true"/>
+        <setting label="30034" type="bool" id="fix_languages" default="true" enable="eq(-4,true)" subsetting="true"/>
         <setting label="30012" type="bool" id="use_proxy_for_license" default="false"/>
     </category>
     <!--

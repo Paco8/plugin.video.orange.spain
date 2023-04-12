@@ -193,7 +193,10 @@ class RequestHandler(BaseHTTPRequestHandler):
               global manifest_base_url, subtrack_ids
               manifest_base_url = baseurl
               content = response.content.decode('utf-8')
-              content = content.replace('Language="qaa"', 'Language="eng"')
+              if addon.getSettingBool('fix_languages'):
+                content = content.replace('Language="qaa"', 'Language="en"')
+                content = content.replace('Language="qha"', 'Language="es"')
+                content = re.sub(r'Language="q([^"]*)"', r'Language="es-[q\1]"', content)
               # Workaround for inputstream.adaptive bug #1064
               content = content.replace('IsLive="true"', 'IsLive="TRUE"')
 
