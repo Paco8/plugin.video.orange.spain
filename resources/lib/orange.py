@@ -17,7 +17,7 @@ from .log import LOG, print_json
 from .network import Network
 from .cache import Cache
 from .timeconv import *
-from .endpoints import *
+from .endpoints import endpoints, API_IMAGES
 
 def date2str(timestamp, format='%d/%m/%Y %H:%M:%S'):
   return timestamp2str(timestamp, format)
@@ -140,9 +140,15 @@ class Orange(object):
           self.cache.remove_file('channels2.json')
           break;
 
-    def get_devices(self):
-      url = endpoints['get-terminal-list']
-      data = self.load_json(url)
+    def get_devices(self, use_cache=False):
+      cache_filename = self.username + '_device_list.json'
+      content = self.cache.load(cache_filename)
+      if content and use_cache:
+        data = json.loads(content)
+      else:
+        url = endpoints['get-terminal-list']
+        data = self.load_json(url)
+        self.cache.save_file(cache_filename, json.dumps(data, ensure_ascii=False))
       #print_json(data)
       res = []
       for t in data['response']['terminals']:
@@ -162,7 +168,7 @@ class Orange(object):
       return None
 
     def get_preferred_device(self):
-      devices = self.get_devices()
+      devices = self.get_devices(use_cache=True)
       dev = None
 
       for dev in devices:
@@ -1086,7 +1092,7 @@ class Orange(object):
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
 
-      url = API_RTV + 'Login?client=json&username=' + self.username
+      url = endpoints['login-rtv'] + '&username=' + self.username
       data = {'username': self.username, 'password': decode_base64(self.password)}
       response = self.net.session.post(url, data = data)
       content = response.content.decode('utf-8')
@@ -1110,7 +1116,7 @@ class Orange(object):
 
       LOG('initial_cookie: {}'.format(initial_cookie))
 
-      url = API_RECO + 'Login?client=json'
+      url = endpoints['login-reco']
       headers['Cookie'] = initial_cookie
       data = self.net.load_data(url, headers)
       #print_json(data)
@@ -1130,7 +1136,7 @@ class Orange(object):
       if len(data['response']) > 0:
         profile_id = str(data['response'][0]['id'])
 
-        url = API_RECO + 'Login?client=json&profile_id=' + profile_id
+        url = endpoints['login-reco'] + '&profile_id=' + profile_id
         data = self.net.load_data(url, headers)
         #print_json(data)
         if data['response']['status'] != 'SUCCESS':

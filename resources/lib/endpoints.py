@@ -39,4 +39,6 @@ endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_
              'get-service-list': API_RTV + 'GetHouseholdServiceList?client=json',
              'get-subscribed-channels': API_RTV + 'GetHouseholdSubscribedChannelList?client=json',
              'open-session': 'https://sm.orangetv.orange.es/pc/api/sm/v1/openSession?type=live&contentId={contentId}&deviceId={deviceId}&accountId={accountId}',
+             'login-rtv': API_RTV + 'Login?client=json',
+             'login-reco': API_RECO + 'Login?client=json',
             }
