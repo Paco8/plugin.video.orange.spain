@@ -917,7 +917,9 @@ class Orange(object):
         t['info']['playcount'] = 1 # Set as watched
         t['subscribed'] = self.is_subscribed_channel(t['id'])
         t['source_type'] = d['sourceType']
-
+        if t['source_type'] == 'IP':
+          t['ip'] = d.get('ip')
+          t['port'] = d.get('port')
         for f in d['extrafields']:
           if f['name'] == 'externalStreamingUrl':
             try:
@@ -1184,6 +1186,7 @@ class Orange(object):
       res = []
       for c in channels:
         if not c['subscribed']: continue
+        if c['source_type'] in ['IP', 'DVB-SI']: continue # Not supported
         t = {}
         t['name'] = c['channel_name']
         t['id'] = c['id']

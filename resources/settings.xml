@@ -1,8 +1,8 @@
 <settings>
     <category label="30001">
         <setting label="30017" type="bool" id="only_subscribed" default="true"/>
-        <setting label="30020" type="bool" id="channels_with_epg" default="true"/>
-        <setting label="30021" type="bool" id="add_extra_info" default="true"/>
+        <setting label="30020" type="bool" id="channels_with_epg" default="false"/>
+        <setting label="30021" type="bool" id="add_extra_info" default="false"/>
         <setting label="30321" type="bool" id="age_rating" default="false" enable="eq(-1,true)"/>
         <setting label="30018" type="bool" id="force_hd" default="false"/>
         <setting label="30019" type="action" id="is_settings" action="Addon.OpenSettings(inputstream.adaptive)" enable="System.HasAddon(inputstream.adaptive)" option="close"/>
@@ -25,11 +25,11 @@
     </category>
     -->
     <category label="30304">
-        <setting label="30305" type="bool" id="export_epg" default="false"/>
-        <setting label="30306" type="folder" id="epg_folder" source="" default="" option="writeable" enable="eq(-1,true)" subsetting="true"/>
-        <setting label="30312" type="action" id="export_epg_now" action="RunPlugin(plugin://plugin.video.orange.spain/?action=export_epg_now)" enable="eq(-2,true)" option="close" subsetting="true"/>
-        <setting label="30307" type="action" action="InstallAddon(pvr.iptvsimple)" option="close" visible="!System.HasAddon(pvr.iptvsimple)" enable="eq(-3,true)" subsetting="true"/>
-        <setting label="30308" type="action" action="Addon.OpenSettings(pvr.iptvsimple)" option="close" visible="System.HasAddon(pvr.iptvsimple)" enable="eq(-4,true)" subsetting="true"/>
+        <setting label="30306" type="folder" id="epg_folder" source="" default="" option="writeable"/>
+        <setting label="30305" type="bool" id="export_epg" default="false" enable="!eq(-1,)"/>
+        <setting label="30308" type="action" action="Addon.OpenSettings(pvr.iptvsimple)" option="close" visible="System.HasAddon(pvr.iptvsimple)" enable="eq(-1,true)" subsetting="true"/>
+        <setting label="30307" type="action" action="InstallAddon(pvr.iptvsimple)" option="close" visible="!System.HasAddon(pvr.iptvsimple)" enable="eq(-2,true)" subsetting="true"/>
+        <setting label="30312" type="action" id="export_epg_now" action="RunPlugin(plugin://plugin.video.orange.spain/?action=export_epg_now)" option="close" enable="!eq(-4,)"/>
     </category>
     <category label="30003">
         <setting label="30010" type="labelenum" id="drm_type" values="Widevine|Playready"/>

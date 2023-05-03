@@ -214,6 +214,7 @@ def add_videos(category, ctype, videos):
 
   for t in videos:
     #LOG("t: {}".format(t))
+    if t.get('source_type') in ['IP', 'DVB-SI']: continue
     if 'subscribed' in t:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       t['info']['title'] = o.colorize_title(t)
