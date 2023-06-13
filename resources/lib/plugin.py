@@ -333,7 +333,10 @@ def list_devices(params):
 
   for d in devices:
     resolution = 'HD' if d['type'] in o.hd_devices else 'SD'
-    name = '{} - [COLOR yellow]{}[/COLOR] [{}] ({})'.format(d['name'], resolution, d['type'],  d['reg_date'])
+    devname = d['name']
+    if sys.version_info[0] < 3:
+      devname = devname.encode('utf-8')
+    name = '{} - [COLOR yellow]{}[/COLOR] [{}] ({})'.format(devname, resolution, d['type'],  d['reg_date'])
     if d['serial_number'] == o.device['id']:
       name = '[B][COLOR blue]' + name + '[/COLOR][/B]'
 
