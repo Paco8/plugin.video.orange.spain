@@ -493,18 +493,7 @@ def router(paramstring):
         play(params)
     elif params['action'] == 'wishlist':
       # Wishlist
-      if not 'type' in params:
-        open_folder(addon.getLocalizedString(30102)) # Wishlist
-        add_menu_option(addon.getLocalizedString(30105), get_url(action='wishlist', type='movie')) # Movies
-        add_menu_option(addon.getLocalizedString(30106), get_url(action='wishlist', type='series')) # Series
-        close_folder()
-      else:
-        wl = o.get_wishlist()
-        l = []
-        for t in wl:
-          if t['type'] == params['type']: l.append(t)
-        ctype = 'tvshows' if params['type'] == 'series' else 'movies'
-        add_videos(addon.getLocalizedString(30102), ctype, l) # Wishlist
+      add_videos(addon.getLocalizedString(30102), 'movies', o.get_wishlist()) # Wishlist
     elif params['action'] == 'recordings':
       # Recordings
       add_videos(addon.getLocalizedString(30103), 'movies', o.get_recordings()) # Recordings
@@ -544,7 +533,7 @@ def router(paramstring):
     # Main
     open_folder(addon.getLocalizedString(30101)) # Menu
 
-    if not o.logged:
+    if not o.logged and (o.username and o.password):
       show_notification(addon.getLocalizedString(30166)) # Login failed
 
     if o.logged:

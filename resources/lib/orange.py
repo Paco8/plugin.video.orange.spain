@@ -1082,7 +1082,16 @@ class Orange(object):
 
     def login(self):
       # Load cookie from cache
-      cookie = self.cache.load('cookie.conf')
+
+      # The cookie is valid for 4 days of so
+      # but to be sure we'll renew it after 1 day
+      # unless there are no login credentials,
+      # in this case we'll try to use the cookie
+      # the maximum number of days
+
+      ndays = 1
+      if not self.username or not self.password: ndays = 4
+      cookie = self.cache.load('cookie.conf', ndays*24*60)
       if cookie:
         self.cookie = cookie
         return True
