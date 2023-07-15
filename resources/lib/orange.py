@@ -1045,6 +1045,7 @@ class Orange(object):
     def get_playback_url(self, id, stype, program_id = None):
       playback_url = None
       token = None
+      source_type = ''
       if stype == 'vod':
         data = self.get_video_playback_url(id)
         LOG('data: {}'.format(data))
@@ -1066,7 +1067,7 @@ class Orange(object):
         playback_url = data['response']['playingUrl']
         token = data['response']['casToken']
         source_type = data['response']['sourceType'];
-      return playback_url, token
+      return {'playback_url': playback_url, 'token': token, 'source_type': source_type}
 
     def open_session(self, id):
       url = endpoints['open-session'].format(contentId=id, deviceId=self.device['id'], accountId=self.username)

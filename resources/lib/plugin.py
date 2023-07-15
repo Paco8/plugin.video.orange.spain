@@ -7,7 +7,6 @@ import json
 import xbmc
 import xbmcgui
 import xbmcplugin
-#import xbmcdrm
 
 if sys.version_info[0] >= 3:
   import urllib.request as urllib2
@@ -55,30 +54,37 @@ def play(params):
   LOG('play: id: {} stype: {}'.format(id, stype))
 
   try:
-    manifest_type = 'ism'
-    if 'source_type' in params:
-      if   params['source_type'] == 'MPEGDash': manifest_type = 'mpd'
-      elif params['source_type'] == 'HLS':      manifest_type = 'hls'
-      if params['source_type'] in ['DVB-SI', 'IP']:
-        show_notification(addon.getLocalizedString(30203))
-        return
-    LOG('manifest_type: {}'.format(manifest_type))
-
-    if manifest_type == 'hls' and 'playback_url' in params:
+    if params.get('source_type') == 'HLS' and 'playback_url' in params:
       play_item = xbmcgui.ListItem(path=params['playback_url'])
       xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
+      return
+
+    if params.get('source_type') in ['DVB-SI', 'IP']:
+      show_notification(addon.getLocalizedString(30203))
       return
 
     if stype == 'vod':
       if not o.check_video_in_ticket_list(id):
         data = o.order_video(id)
-        LOG('data: {}'.format(data))
+        LOG('order_video: data: {}'.format(data))
 
     program_id = params.get('program_id')
-    playback_url, token = o.get_playback_url(id, stype, program_id)
+    i = o.get_playback_url(id, stype, program_id)
+    LOG('playback info: {}'.format(i))
+    playback_url = i['playback_url']
+    token = i['token']
+    source_type = i['source_type']
+
+    manifest_type = 'ism'
+    if source_type == 'MPEGDash':
+      manifest_type = 'mpd'
+    elif source_type == 'HLS':
+      manifest_type = 'hls'
+    LOG('manifest_type: {}'.format(manifest_type))
 
     if addon.getSettingBool('force_hd'):
       playback_url = playback_url.replace('dash_low.mpd', 'dash_high.mpd')
+      playback_url = playback_url.replace('dash_medium.mpd', 'dash_high.mpd')
       playback_url = playback_url.replace('mss_medium', 'mss_high')
       #playback_url = playback_url.replace('Profil1', 'Profil2')
       #playback_url = playback_url.replace('Profil3', 'Profil2')

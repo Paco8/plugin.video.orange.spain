@@ -45,7 +45,7 @@ ttml.ssa_timestamp_min_sep = 0
 session = requests.Session()
 session.headers.update({'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'})
 
-previous_token = ''
+previous_tokens = []
 manifest_base_url = ''
 stype = ''
 subtrack_ids = []
@@ -161,6 +161,17 @@ def download_subs(url):
 
     return content
 
+def is_ascii(s):
+  try:
+    return s.isascii()
+  except:
+    return all(ord(c) < 128 for c in s)
+
+def try_load_json(text):
+  try:
+    return json.loads(text)
+  except:
+    return None
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -266,7 +277,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
         try:
         #if True:
-            global previous_token
+            global previous_tokens
             pos = path.find('?')
             path = path[pos+1:]
             params = dict(parse_qsl(path))
@@ -279,15 +290,16 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             token = params['token']
             LOG('token: {}'.format(token))
-            LOG('previous_token: {}'.format(previous_token))
-            if previous_token == token:
+            LOG('previous_tokens: {}'.format(previous_tokens))
+            if token in previous_tokens:
               LOG('duplicated token')
               from .orange import Orange
               o = Orange(profile_dir)
               program_id = None if params['program_id'] == 'None' else params['program_id']
-              _, token = o.get_playback_url(params['id'], params['stype'], program_id)
+              i = o.get_playback_url(params['id'], params['stype'], program_id)
+              token = i['token']
               LOG('new token: {}'.format(token))
-            previous_token = token
+            previous_tokens.append(token)
 
             url = '{}?token={}'.format(params['lurl'], quote_plus(token))
             LOG('license url: {}'.format(url))
@@ -295,6 +307,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             license_data = content= response.content
             LOG('license response length: {}'.format(len(license_data)))
             LOG('license response: {}'.format(encode_base64(license_data)))
+            if is_ascii(license_data):
+              LOG('license response (ascii): {}'.format(license_data))
 
             self.send_response(200)
             self.end_headers()
