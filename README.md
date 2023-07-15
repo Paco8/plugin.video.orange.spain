@@ -31,6 +31,9 @@ Tras la instalación, la primera vez que entres en el addon tienes que ir a la o
 ## Dispositivos
 Orange TV solo permite 5 dispositivos. Como ese límite me parece excesivamente bajo, el addon puede funcionar usando el identificador de otro dispositivo existente, de modo que puedes tener el addon instalado en diferentes dispositivos y solo contará como uno (o ninguno). En la opción `Gestionar dispositivos` puedes elegir qué dispositivo usar para el addon. Hay que tener en cuenta que solo unos cuantos permiten HD (SmartTV, FireTV y Chromecast). Por defecto el addon usará uno de esos dispositivos si ya tienes uno. Si no es así y hay menos de 5 dispositivos, el addon creará automáticamente y usará un dispositivo SmartTV. Si ya había 5 entonces el addon usará el primer dispositivo que encuentre.
 
+## IMPORTANTE
+Si tienes problemas a la hora de reproducir un vídeo, trata de seleccionar un dispositivo diferente en "Gestionar dispositivos". En concreto parece que los dispositivos "PC" funcionan con cualquier tipo de vídeo.
+
 ## Configuración
 - **`Solo mostrar el contenido incluido en la suscripción`**: si está activada esta opcion el contenido fuera de tu abono no aparecerá en los listados. Si está desactivada sí aparecerá pero marcado en gris, y aunque te dejará intentar reproducirlo seguramente dará un error.
 - **`Mostrar el programa en emisión en los canales de TV`**: la lista de canales mostrará además el programa que se está emitiendo en esos momentos en cada canal.
