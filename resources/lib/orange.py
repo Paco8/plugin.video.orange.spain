@@ -485,11 +485,11 @@ class Orange(object):
 
       return res
 
-    def order_recording(self, program_id):
+    def order_recording(self, program_id, recursive=False):
       url = endpoints['get-extended-program'].format(program_external_id=program_id)
       data = self.load_json(url)
       id = data['response']['id']
-      url = endpoints['order-recording'].format(program_id=id)
+      url = endpoints['order-recording'].format(program_id=id, recursive='true' if recursive else 'false')
       data = self.load_json(url)
       return data
 
@@ -778,6 +778,7 @@ class Orange(object):
             program['genres'] = []
             for g in p['genres']:
               program['genres'].append(g['name'])
+          program['series'] = {'season': p.get('seriesSeason'), 'episode': p.get('episodeId'), 'name': p.get('seriesName')}
           epg[id].append(program)
       return epg
 
@@ -837,6 +838,7 @@ class Orange(object):
           ch['recording_id'] = program['id']
           ch['startDate'] = program['startDate']
           ch['endDate'] = program['endDate']
+          ch['series'] = program['series']
 
     def get_subscribed_channels(self):
       content = self.cache.load('subscribed_channels.json')
@@ -981,9 +983,10 @@ class Orange(object):
         t['info']['aired'] = date2str(p['startDate'], '%Y-%m-%d')
         t['subscribed'] = self.is_subscribed_channel(p['channel_id'])
         t['startDate'] = p['startDate']
-        t['endtDate'] = p['endDate']
+        t['endDate'] = p['endDate']
         t['aired'] = aired
         t['info_id'] = t['program_id']
+        t['series'] = p['series']
         if self.add_extra_info:
           self.add_video_extra_info(t)
         videos.append(t)
@@ -1243,6 +1246,13 @@ class Orange(object):
         handle.write(res)
 
     def export_epg_to_xml(self, filename):
+      if sys.version_info[0] < 3:
+        # Python 2
+        from cgi import escape as html_escape
+      else:
+        # Python 3
+        from html import escape as html_escape
+
       channels = self.export_channels()
       res = []
       res.append('<?xml version="1.0" encoding="UTF-8"?>\n' + 
@@ -1267,12 +1277,12 @@ class Orange(object):
           res.append('<programme start="{}" stop="{}" channel="{}"'.format(start, stop, ch['id']) +
                     (' catchup-id="{}"'.format(url) if url else "") +
                     '>\n' +
-                    '  <title>{}</title>\n'.format(e['title']) +
-                    '  <sub-title>{}</sub-title>\n'.format(e['subtitle']))
+                    '  <title>{}</title>\n'.format(html_escape(e['title'])) +
+                    '  <sub-title>{}</sub-title>\n'.format(html_escape(e['subtitle'])))
           if 'image' in e:
             res.append('  <icon src="{}"/>\n'.format(e['image']))
           if 'description' in e:
-            res.append('  <desc>{}</desc>\n'.format(e['description']))
+            res.append('  <desc>{}</desc>\n'.format(html_escape(e['description'])))
           if 'genre' in e:
             res.append('  <category>{}</category>\n'.format(e['genre']))
           if 'credits' in e and len(e['credits']) > 0:

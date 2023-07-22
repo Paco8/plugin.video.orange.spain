@@ -31,7 +31,7 @@ endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_
              'get-channel-list': API_RTV + 'GetChannelList?client=json&bouquet_id={bouquet_id}&model_external_id={model_external_id}&filter_unsupported_channels=true',
              'search-live': API_URL + 'search/v1/SearchLivePrograms?client=json&text={text}&max_results=100&image_name=all&fuzzy=true&device_models={device_models}&availability_type=all&order_by=broadcastStartTime',
              'search-vod': API_URL + 'search/v1/SearchVideos?services={services}&client=json&text={text}&content_type={content_type}&max_results=50&image_name=all&fuzzy=false&order_by=relevance&quality=sd,hd&search_by=title,genre',
-             'order-recording': API_RTV + 'OrderRecording?client=json&program_id={program_id}&recursive=false&allow_scheduling_over_quota=false',
+             'order-recording': API_RTV + 'OrderRecording?client=json&program_id={program_id}&recursive={recursive}&allow_scheduling_over_quota=false',
              'delete-recording': API_RTV + 'DeleteRecording?client=json&recording_id={recording_id}',
              'get-extended-program': API_RTV + 'GetExtendedProgram?client=json&program_external_id={program_external_id}',
              'register-terminal': API_RTV + 'RegisterTerminal?client=json&serial_number={serial_number}&name={name}&model_external_id={model_external_id}',

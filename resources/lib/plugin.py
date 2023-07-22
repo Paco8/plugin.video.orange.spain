@@ -255,21 +255,34 @@ def add_videos(category, ctype, videos):
       if info_id and t['stream_type'] != 'vod':
         url += '&info_id=' + info_id
 
+      menu_items = []
+
       if t['stream_type'] == 'tv' and 'program_id' in t:
         play_from_beginning_action = (addon.getLocalizedString(30170), "RunPlugin(" + url +'&menu=1&program_id=' +  t['program_id'] + ")")
         record_program_action = (addon.getLocalizedString(30171), "RunPlugin(" + get_url(action='add_recording', id=t['program_id']) + ")")
+        record_season_action = (addon.getLocalizedString(30169), "RunPlugin(" + get_url(action='add_recording', id=t['program_id'], recursive=True) + ")")
+        is_tvshow = 'series' in t and bool(t['series']['season'])
+
         if t.get('is_catchup', False):
           url += '&program_id=' + t['program_id']
-          list_item.addContextMenuItems([record_program_action])
+          menu_items.append(record_program_action)
+          if is_tvshow:
+            menu_items.append(record_season_action)
         else:
-          list_item.addContextMenuItems([play_from_beginning_action, record_program_action])
+          menu_items.append(play_from_beginning_action)
+          menu_items.append(record_program_action)
+          if is_tvshow:
+            menu_items.append(record_season_action)
 
       if t['stream_type'] == 'rec':
           action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'])
-          list_item.addContextMenuItems([(addon.getLocalizedString(30173), "RunPlugin(" + action + ")")])
+          menu_items.append((addon.getLocalizedString(30173), "RunPlugin(" + action + ")"))
 
       if 'playback_url' in t:
         url += '&playback_url=' + quote_plus(t['playback_url'])
+
+      if len(menu_items) > 0:
+        list_item.addContextMenuItems(menu_items)
 
       xbmcplugin.addDirectoryItem(_handle, url, list_item, False)
     elif t['type'] == 'series':
@@ -436,9 +449,10 @@ def search(params):
 
   close_folder(cacheToDisc=False)
 
-def order_recording(program_id):
+def order_recording(program_id, recursive=False):
+  LOG('order_recording: {} {}'.format(program_id, recursive))
   try:
-    data = o.order_recording(program_id)
+    data = o.order_recording(program_id, recursive)
     if data['response']['status'] == 'SUCCESS':
       show_notification(addon.getLocalizedString(30172), xbmcgui.NOTIFICATION_INFO)
   except Exception as e:
@@ -524,7 +538,7 @@ def router(paramstring):
     elif params['action'] == 'search':
       search(params)
     elif params['action'] == 'add_recording':
-      order_recording(params['id'])
+      order_recording(params['id'], params.get('recursive', False))
     elif params['action'] == 'epg':
       list_epg(params)
     elif params['action'] == 'delete_recording':
