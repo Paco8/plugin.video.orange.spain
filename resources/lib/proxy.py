@@ -37,6 +37,7 @@ from contextlib import closing
 from .b64 import encode_base64
 from .addon import addon, profile_dir
 from .log import LOG
+#from .mp4box import parse_box
 
 from ttml2ssa import Ttml2SsaAddon
 ttml = Ttml2SsaAddon()
@@ -44,6 +45,9 @@ ttml.ssa_timestamp_min_sep = 0
 
 session = requests.Session()
 session.headers.update({'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'})
+
+import xbmc
+kodi_version= int(xbmc.getInfoLabel('System.BuildVersion')[:2])
 
 previous_tokens = []
 manifest_base_url = ''
@@ -91,13 +95,33 @@ def download_file(url, timeout=5):
       SLOG('exception error: {}'.format(str(e)))
     retries += 1
     SLOG('WARNING: download failed. Retrying ({})'.format(retries))
-    time.sleep(0.2)
+    time.sleep(0.7)
   return response.content, 200
+
 
 def download_subs(url):
     def download(url):
       data, _ = download_file(url, timeout=timeout)
       return data
+
+    def add_text_to_box(subtext, binary=None):
+      size = len(subtext)
+      if not binary:
+        binary = b'\x00\x00\x00Tmoof\x00\x00\x00\x10mfhd\x00\x00\x00\x00\x00\x00\x01/\x00\x00\x00<traf\x00\x00\x00\x14tfhd\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00 trun\x00\x00\x07\x01\x00\x00\x00\x01\x00\x00\x00\\\x011-\x00\x00\x00\x04\x1d\x02\x80\x00@\x00\x00\x04%mdat'
+
+        import struct
+        new_bin = binary[0:20]
+        new_bin += struct.pack('>L', sequence_number)
+        new_bin += binary[24:76]
+        new_bin += struct.pack('>L', size)
+        new_bin += binary[80:84]
+        new_bin += struct.pack('>L', size+8)
+        new_bin += binary[88:]
+        box = new_bin + subtext
+      else:
+        box = binary + subtext
+      return box
+
 
     # Sometimes kodi skips one fragment. It seems that loading
     # two fragments at a time solves the problem.
@@ -122,7 +146,16 @@ def download_subs(url):
 
     LOG('number of fragments: {}'.format(len(fragments)))
 
-    lines = '<?xml version="1.0" encoding="utf-8"?><tt xml:lang="spa"><body><div>'
+    lines = '<?xml version="1.0" encoding="utf-8"?><tt xml:lang="spa"><head></head><body><div>'
+
+    sequence_number = 0
+    #if len(fragments) > 0:
+    #  box = parse_box(fragments[0])
+    #  sequence_number = box.get('moof', {}).get('mfhd', {}).get('sequence_number', 0)
+    #  LOG('sequence_number: {}'.format(sequence_number))
+
+    subtext = b''
+    sublines = ''
     for frag in range(0, len(fragments)):
       content = fragments[frag]
       if not content: break
@@ -132,6 +165,7 @@ def download_subs(url):
         binary = content[0:pos]
         subtext = content[pos:]
         SLOG('frag: {} length: {}'.format(frag, len(subtext)))
+        #LOG(subtext)
 
         if subtext:
           ttml.shift = frag * 2000
@@ -140,26 +174,24 @@ def download_subs(url):
             start = ttml._tc.ms_to_subrip(entry['ms_begin']).replace(',', '.')
             end = ttml._tc.ms_to_subrip(entry['ms_end']).replace(',', '.')
             text = entry['text'].replace('\n', '<br/>')
-            lines += '<div><p begin="{}" end="{}">{}</p></div>\n'.format(start, end, text)
+            if kodi_version < 21: sublines += '<div>'
+            sublines += '<p begin="{}" end="{}">{}</p>'.format(start, end, text)
+            if kodi_version < 21: sublines += '</div>'
+            sublines += '\n'
 
+    #if not sublines:
+    #  import random
+    #  start = ttml._tc.ms_to_subrip(random.randint(1, 5)).replace(',', '.')
+    #  end = ttml._tc.ms_to_subrip(1000 + random.randint(1, 5)).replace(',', '.')
+    #  sublines += '<p begin="{}" end="{}">{} {}</p>\n'.format(start, end, 'Hola', sequence_number)
+
+    lines += sublines
     lines += '</div></body></tt>'
     subtext = lines.encode('utf-8')
+    #LOG(subtext)
 
-    size = len(subtext)
+    return add_text_to_box(subtext)
 
-    binary = b'\x00\x00\x00Tmoof\x00\x00\x00\x10mfhd\x00\x00\x00\x00\x00\x00\x01/\x00\x00\x00<traf\x00\x00\x00\x14tfhd\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00 trun\x00\x00\x07\x01\x00\x00\x00\x01\x00\x00\x00\\\x011-\x00\x00\x00\x04\x1d\x02\x80\x00@\x00\x00\x04%mdat'
-
-    import struct
-    new_bin = binary[0:76]
-    new_bin += struct.pack('>L', size)
-    new_bin += binary[80:84]
-    new_bin += struct.pack('>L', size+8)
-    new_bin += binary[88:]
-
-    #content = binary + subtext
-    content = new_bin + subtext
-
-    return content
 
 def is_ascii(s):
   try:
@@ -172,6 +204,7 @@ def try_load_json(text):
     return json.loads(text)
   except:
     return None
+
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -238,7 +271,7 @@ class RequestHandler(BaseHTTPRequestHandler):
               LOG('is_sub: {}'.format(is_sub))
               #is_sub = False
 
-              if is_sub and addon.getSettingBool('use_ttml2ssa'):
+              if is_sub and addon.getSettingBool('use_ttml2ssa') and ((kodi_version < 21) or (kodi_version > 20 and stype == 'vod')):
                 content = download_subs(url)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
