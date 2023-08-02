@@ -90,7 +90,7 @@ def play(params):
       #playback_url = playback_url.replace('Profil3', 'Profil2')
 
     proxy = o.cache.load_file('proxy.conf')
-    if manifest_type == 'ism' and addon.getSettingBool('manifest_modification') and proxy:
+    if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
       playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
 
     LOG('url: {} token: {}'.format(playback_url, token))

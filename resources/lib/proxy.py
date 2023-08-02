@@ -52,6 +52,7 @@ kodi_version= int(xbmc.getInfoLabel('System.BuildVersion')[:2])
 previous_tokens = []
 manifest_base_url = ''
 stype = ''
+manifest_type = None
 subtrack_ids = []
 
 timeout = 2
@@ -219,15 +220,17 @@ class RequestHandler(BaseHTTPRequestHandler):
               timeout = addon.getSettingInt('proxy_timeout') / 1000
               LOG('proxy timeout: {}'.format(timeout))
 
-              global stype
+              global stype, manifest_type
               pos = path.find('?')
               path = path[pos+1:]
               params = dict(parse_qsl(path))
               LOG('params: {}'.format(params))
               url = params['manifest']
               stype = params['stype']
+              manifest_type = 'mpd' if '.mpd' in path else 'ism'
               LOG('url: {}'.format(url))
               LOG('stype: {}'.format(stype))
+              LOG('manifest_type: {}'.format(manifest_type))
 
               response = session.get(url, allow_redirects=True)
               LOG('headers: {}'.format(response.headers))
@@ -237,21 +240,30 @@ class RequestHandler(BaseHTTPRequestHandler):
               global manifest_base_url, subtrack_ids
               manifest_base_url = baseurl
               content = response.content.decode('utf-8')
-              if addon.getSettingBool('fix_languages'):
-                content = content.replace('Language="qaa"', 'Language="en"')
-                content = content.replace('Language="qha"', 'Language="es"')
-                content = re.sub(r'Language="q([^"]*)"', r'Language="es-[q\1]"', content)
-              # Workaround for inputstream.adaptive bug #1064
-              content = content.replace('IsLive="true"', 'IsLive="TRUE"')
 
-              # Find subtitles tracks
-              matches = re.findall(r'<StreamIndex Type="text".*?Url="(.*?)"', content)
-              LOG('matches: {}'.format(matches))
-              subtrack_ids = []
-              for match in matches:
-                m = re.search(r'/Fragments\((.*?)=', match)
-                if m: subtrack_ids.append(m.group(0))
-              LOG('subtrack_ids: {}'.format(subtrack_ids))
+              if manifest_type == 'ism':
+                """ ISM manifest """
+                if addon.getSettingBool('fix_languages'):
+                  content = content.replace('Language="qaa"', 'Language="en"')
+                  content = content.replace('Language="qha"', 'Language="es"')
+                  content = re.sub(r'Language="q([^"]*)"', r'Language="es-[q\1]"', content)
+                # Workaround for inputstream.adaptive bug #1064
+                content = content.replace('IsLive="true"', 'IsLive="TRUE"')
+
+                # Find subtitles tracks
+                matches = re.findall(r'<StreamIndex Type="text".*?Url="(.*?)"', content)
+                LOG('matches: {}'.format(matches))
+                subtrack_ids = []
+                for match in matches:
+                  m = re.search(r'/Fragments\((.*?)=', match)
+                  if m: subtrack_ids.append(m.group(0))
+                LOG('subtrack_ids: {}'.format(subtrack_ids))
+              elif manifest_type == 'mpd':
+                """ MPD manifest """
+                if addon.getSettingBool('fix_languages'):
+                  content = content.replace('lang="qaa"', 'lang="en"')
+                  content = content.replace('lang="qha"', 'lang="es"')
+                  content = re.sub(r'lang="q([^"]*)"', r'lang="es-[q\1]"', content)
 
               manifest_data = content
               self.send_response(200)
@@ -292,6 +304,19 @@ class RequestHandler(BaseHTTPRequestHandler):
               self.send_header('Location', url)
               self.end_headers()
               SLOG('==== HTTP GET End Request {}'.format(path))
+            elif manifest_type == 'mpd':
+              url = manifest_base_url + path
+              if False and addon.getSettingBool('use_ttml2ssa') and 'subtitle' in url:
+                content = download_subs(url)
+                self.send_response(200)
+                self.send_header('Content-type', 'video/mp4')
+                self.end_headers()
+                self.wfile.write(content)
+              else:
+                # Redirect
+                self.send_response(301)
+                self.send_header('Location', url)
+                self.end_headers()
             else:
               self.send_response(404)
               self.end_headers()
