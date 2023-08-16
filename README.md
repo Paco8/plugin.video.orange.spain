@@ -34,6 +34,8 @@ Orange TV solo permite 5 dispositivos. Como ese límite me parece excesivamente 
 ## IMPORTANTE
 Si tienes problemas a la hora de reproducir un vídeo, trata de seleccionar un dispositivo diferente en "Gestionar dispositivos". En concreto parece que los dispositivos "PC" funcionan con cualquier tipo de vídeo.
 
+En algunos dispositivos también puede ser necesario activar la opción "Usar proxy para la licencia" en la sección "Proxy" de los ajustes.
+
 ## Configuración
 - **`Solo mostrar el contenido incluido en la suscripción`**: si está activada esta opcion el contenido fuera de tu abono no aparecerá en los listados. Si está desactivada sí aparecerá pero marcado en gris, y aunque te dejará intentar reproducirlo seguramente dará un error.
 - **`Mostrar el programa en emisión en los canales de TV`**: la lista de canales mostrará además el programa que se está emitiendo en esos momentos en cada canal.
