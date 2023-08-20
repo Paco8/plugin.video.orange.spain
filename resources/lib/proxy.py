@@ -37,7 +37,6 @@ from contextlib import closing
 from .b64 import encode_base64
 from .addon import addon, profile_dir
 from .log import LOG
-#from .mp4box import parse_box
 
 from ttml2ssa import Ttml2SsaAddon
 ttml = Ttml2SsaAddon()
@@ -100,48 +99,67 @@ def download_file(url, timeout=5):
   return response.content, 200
 
 
-def download_subs(url):
+def download_subs(url, multiple_fragments=False, timeshift=0, relative=True, timestamp=None):
     def download(url):
       data, _ = download_file(url, timeout=timeout)
       return data
 
     def add_text_to_box(subtext, binary=None):
-      size = len(subtext)
+      import struct
+
       if not binary:
         binary = b'\x00\x00\x00Tmoof\x00\x00\x00\x10mfhd\x00\x00\x00\x00\x00\x00\x01/\x00\x00\x00<traf\x00\x00\x00\x14tfhd\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00 trun\x00\x00\x07\x01\x00\x00\x00\x01\x00\x00\x00\\\x011-\x00\x00\x00\x04\x1d\x02\x80\x00@\x00\x00\x04%mdat'
 
-        import struct
-        new_bin = binary[0:20]
-        new_bin += struct.pack('>L', sequence_number)
-        new_bin += binary[24:76]
-        new_bin += struct.pack('>L', size)
-        new_bin += binary[80:84]
+      size = len(subtext)
+      mdat_start = binary.find(b'mdat')
+
+      if mdat_start > -1:
+        new_bin = binary[0:mdat_start - 4]
         new_bin += struct.pack('>L', size+8)
-        new_bin += binary[88:]
-        box = new_bin + subtext
+        new_bin += b'mdat'
+        new_bin += subtext
+
+        trun_start = new_bin.find(b'trun')
+        if trun_start > -1:
+          flags = struct.unpack_from('>I', new_bin[trun_start:], 4)[0] & 0xffffff
+          sample_count = struct.unpack_from('>I', new_bin[trun_start:], 8)[0]
+          first_sample_flags_present = flags & 0x0004
+          #LOG('{} {} {}'.format(hex(flags), sample_count, first_sample_flags_present))
+
+          if sample_count > 0 and not first_sample_flags_present:
+            sample_size = struct.unpack_from('>I', new_bin[trun_start:], 20)[0]
+            #LOG('sample_size: {}'.format(sample_size))
+            new_sample_size = len(subtext)
+            new_bin = new_bin[:trun_start + 20] + struct.pack('>I', new_sample_size) + new_bin[trun_start + 20 + 4:]
+
+        #LOG(repr(new_bin))
+        return new_bin
       else:
-        box = binary + subtext
-      return box
+        return binary
 
 
     # Sometimes kodi skips one fragment. It seems that loading
     # two fragments at a time solves the problem.
     fragments = []
-    m = re.search(r'Fragments\(.*?=(\d+)\)', url)
-    if m:
-      timestamp = int(m.group(1))
+    #multiple_fragments = False
+
+    if timestamp is not None:
       seq = timestamp // 20000000
       LOG('timestamp: {} seq:{}'.format(timestamp, seq))
-      next_timestamp = (seq+1) * 20000000
-      LOG('next_timestamp: {}'.format(next_timestamp))
-      new_url = url.replace('='+str(timestamp), '='+str(next_timestamp))
-      LOG('new_url: {}'.format(new_url))
-      if (seq % 2) == 0:
-        fragments.append(download(url))
-        fragments.append(download(new_url))
+      if multiple_fragments:
+        #next_timestamp = (seq+1) * 20000000
+        next_timestamp = timestamp + 20000000
+        LOG('next_timestamp: {}'.format(next_timestamp))
+        new_url = url.replace('='+str(timestamp), '='+str(next_timestamp))
+        LOG('new_url: {}'.format(new_url))
+        if (seq % 2) == 0:
+          fragments.append(download(url))
+          fragments.append(download(new_url))
+        else:
+          content = ''
+          SLOG('skipping {}'.format(timestamp))
       else:
-        content = ''
-        SLOG('skipping {}'.format(timestamp))
+        fragments.append(download(url))
     else:
       fragments.append(download(url))
 
@@ -149,14 +167,9 @@ def download_subs(url):
 
     lines = '<?xml version="1.0" encoding="utf-8"?><tt xml:lang="spa"><head></head><body><div>'
 
-    sequence_number = 0
-    #if len(fragments) > 0:
-    #  box = parse_box(fragments[0])
-    #  sequence_number = box.get('moof', {}).get('mfhd', {}).get('sequence_number', 0)
-    #  LOG('sequence_number: {}'.format(sequence_number))
-
     subtext = b''
     sublines = ''
+    binary = None
     for frag in range(0, len(fragments)):
       content = fragments[frag]
       if not content: break
@@ -169,29 +182,28 @@ def download_subs(url):
         #LOG(subtext)
 
         if subtext:
-          ttml.shift = frag * 2000
+          ttml.shift = (frag * 2000) if relative else 0
+          ttml.shift += timeshift
+          LOG('ttml.shift: {}'.format(ttml.shift))
           ttml.parse_ttml_from_string(subtext)
           for entry in ttml.entries:
+            #LOG('ms_begin: {}'.format(entry['ms_begin']))
             start = ttml._tc.ms_to_subrip(entry['ms_begin']).replace(',', '.')
             end = ttml._tc.ms_to_subrip(entry['ms_end']).replace(',', '.')
             text = entry['text'].replace('\n', '<br/>')
             if kodi_version < 21: sublines += '<div>'
             sublines += '<p begin="{}" end="{}">{}</p>'.format(start, end, text)
             if kodi_version < 21: sublines += '</div>'
-            sublines += '\n'
-
-    #if not sublines:
-    #  import random
-    #  start = ttml._tc.ms_to_subrip(random.randint(1, 5)).replace(',', '.')
-    #  end = ttml._tc.ms_to_subrip(1000 + random.randint(1, 5)).replace(',', '.')
-    #  sublines += '<p begin="{}" end="{}">{} {}</p>\n'.format(start, end, 'Hola', sequence_number)
 
     lines += sublines
     lines += '</div></body></tt>'
     subtext = lines.encode('utf-8')
     #LOG(subtext)
 
-    return add_text_to_box(subtext)
+    #LOG('manifest_type: {}'.format(manifest_type))
+    #if manifest_type == 'ism': binary = None
+    if timestamp is not None: binary = None
+    return add_text_to_box(subtext, binary)
 
 
 def is_ascii(s):
@@ -265,6 +277,15 @@ class RequestHandler(BaseHTTPRequestHandler):
                   content = content.replace('lang="qha"', 'lang="es"')
                   content = re.sub(r'lang="q([^"]*)"', r'lang="es-[q\1]"', content)
 
+                # Find subtitles tracks
+                matches = re.findall(r'<AdaptationSet[^>]*contentType="subtitle"[^>]*>.*?</AdaptationSet>', content, flags=re.DOTALL)
+                LOG('matches: {}'.format(matches))
+                subtrack_ids = []
+                for match in matches:
+                  m = re.search(r'/Fragments\((.*?)=', match)
+                  if m: subtrack_ids.append(m.group(0))
+                LOG('subtrack_ids: {}'.format(subtrack_ids))
+
               manifest_data = content
               self.send_response(200)
               self.send_header('Content-type', 'application/xml')
@@ -280,11 +301,32 @@ class RequestHandler(BaseHTTPRequestHandler):
                   if sid in url:
                     is_sub = True
                     break
+              if 'Init' in path: is_sub = False
               LOG('is_sub: {}'.format(is_sub))
               #is_sub = False
 
-              if is_sub and addon.getSettingBool('use_ttml2ssa') and ((kodi_version < 21) or (kodi_version > 20 and stype == 'vod')):
-                content = download_subs(url)
+              #if is_sub and addon.getSettingBool('use_ttml2ssa') and ((kodi_version < 21) or (kodi_version > 20 and stype == 'vod')):
+              if is_sub and addon.getSettingBool('use_ttml2ssa'):
+                LOG('url: {}'.format(url))
+                timestamp = None
+                timeshift = 0
+                multiple_fragments = True
+                relative = True
+                m = re.search(r'Fragments\(.*?=(\d+)\)', url)
+                if m:
+                  timestamp = int(m.group(1))
+                  timeshift = (timestamp // 10000)
+                  if manifest_type == 'mpd':
+                    timeshift = -timeshift
+                    #multiple_fragments = False
+                    relative = False
+                  else:
+                    if stype == 'vod':
+                      multiple_fragments = False
+                    else:
+                      timeshift = 0
+                  LOG('timestamp: {} timeshift: {}'.format(timestamp, timeshift))
+                content = download_subs(url, multiple_fragments=multiple_fragments, timeshift=timeshift, relative=relative, timestamp=timestamp)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
@@ -306,8 +348,16 @@ class RequestHandler(BaseHTTPRequestHandler):
               SLOG('==== HTTP GET End Request {}'.format(path))
             elif manifest_type == 'mpd':
               url = manifest_base_url + path
-              if False and addon.getSettingBool('use_ttml2ssa') and 'subtitle' in url:
-                content = download_subs(url)
+              if addon.getSettingBool('use_ttml2ssa') and 'subtitle' in url and 'init' not in url:
+                m = re.search(r'stpp-(\d+).m4s', url)
+                if m:
+                  timestamp = int(m.group(1))
+                  LOG('timestamp: {}'.format(timestamp))
+                  #timestamp = timestamp // 9 * 1000
+                  #timeshift = -(timestamp // 10000)
+                  timeshift = -(timestamp // 90)
+                  LOG('timeshift: {}'.format(timeshift))
+                content = download_subs(url, multiple_fragments = False, timeshift=timeshift)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
