@@ -393,7 +393,9 @@ class Orange(object):
           t['subscribed'] = len(data['availabilities']) > 0
         elif t['stream_type'] == 'u7d':
           t['subscribed'] = self.is_subscribed_channel(data['sourceChannelId'])
-        t['info_id'] = data['externalContentId']
+        if 'externalContentId' in data:
+          t['info_id'] = data['externalContentId']
+          t['wl_id'] = t['info_id']
         t['slug'] = self.create_slug(t['info']['title'])
         if self.add_extra_info:
           self.add_video_extra_info(t)
@@ -404,6 +406,7 @@ class Orange(object):
         t['id'] = data['externalSeriesId']
         t['art'] = self.get_art(data['seriesImages'])
         t['info']['plot'] = ''
+        if 'externalContentId' in data: t['wl_id'] = data['externalContentId']
 
       if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
       if 'rating' in data: t['info']['rating'] = data['rating']
@@ -498,6 +501,16 @@ class Orange(object):
       data = self.load_json(url)
       return data
 
+    def add_to_wishlist(self, id):
+      url = endpoints['add-to-wishlist'].format(id=id)
+      data = self.load_json(url)
+      return data
+
+    def remove_from_wishlist(self, id):
+      url = endpoints['remove-from-wishlist'].format(id=id)
+      data = self.load_json(url)
+      return data
+
     def get_seasons(self, id):
       res = []
 
@@ -587,10 +600,15 @@ class Orange(object):
           t['info']['plot'] = d['tvShowSeries']['description']
           t['art'] = self.get_art(d['tvShowSeries']['attachments'])
           t['subscribed'] = self.is_subscribed_vod(d['securityGroups'], 'externalId')
+          t['wl_id'] = t['id']
         elif d['template'] == 'Heading':
           t['type'] = 'category'
           t['id'] = d['externalId']
           t['info']['title'] = d['name']
+          if 'extrafields' in d:
+            for f in d['extrafields']:
+              if f.get('name') == 'EntryPoint_Param':
+                if f.get('value') != '': t['entry_point'] = f.get('value')
         elif d['template'] == 'Members':
           videos = self.get_category_list(d['externalId'])
           for v in videos: res.append(v)
@@ -607,7 +625,10 @@ class Orange(object):
           t['info']['plot'] = d['description']
           t['info']['genre'] = self.get_genre(d['genreEntityList'])
           t['art'] = self.get_art(d['attachments'])
-          t['info_id'] = d['assetExternalId']
+          if 'assetExternalId' in d:
+            t['info_id'] = d['assetExternalId']
+            t['wl_id'] = t['info_id']
+
           # self.add_video_extra_info(t)
           t['subscribed'] = self.is_subscribed_vod(d['securityGroups'], 'externalId')
           t['slug'] = self.create_slug(t['info']['title'])
@@ -676,7 +697,9 @@ class Orange(object):
           t['info']['year'] = d['year']
           t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
           t['art'] = self.get_art(d['images'], 'url')
-          t['info_id'] = d['externalId']
+          if 'externalId' in d:
+            t['info_id'] = d['externalId']
+            t['wl_id'] = t['info_id']
           if t['stream_type'] == 'vod':
             t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
           elif t['stream_type'] == 'u7d':
@@ -695,6 +718,7 @@ class Orange(object):
           if 'parentImages' in d:
             t['art'] = self.get_art(d['parentImages'], 'url')
           t['subscribed'] = self.is_subscribed_vod(d['availabilities'])
+          t['wl_id'] = t['id']
           """
           t['type'] = 'season'
           t['info']['mediatype'] = 'season'
@@ -1186,10 +1210,9 @@ class Orange(object):
               {'name': 'National Geographic Now', 'id': 'SED_16713'},
               #{'name': 'Lionsgate+ Películas', 'id': 'SED_15338'},
               #{'name': 'Lionsgate+ Series', 'id': 'SED_15340'},
-              {'name': 'Movistar Series 2', 'id': 'SED_13040'},
+              #{'name': 'Movistar Series 2', 'id': 'SED_13040'},
               {'name': 'Películas', 'id': 'TVPLAY_14028'},
-              #{'name': 'Películas U7D', 'id': 'TVPLAY_14028_ANT'},
-              {'name': 'Películas U7D', 'id': 'U7D_14028'})
+              {'name': 'Últimos 7 días', 'id': 'U7D%20TVPLAY'})
 
     def export_channels(self):
       if sys.version_info[0] >= 3:

@@ -12,7 +12,7 @@ API_IMAGES = API_RTV + 'images'
 endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_id}',
              'get-aggregated-video': API_RTV + 'GetAggregatedVideo?client=json&external_asset_id={external_asset_id}',
              'get-video-asset': API_RTV + 'GetVideoAsset?client=json&external_id={external_id}',
-             'get-profile-wishlist': API_RECO + 'GetProfileWishList?client=json&device_models=PC',
+             'get-profile-wishlist': API_RECO + 'GetProfileWishList?client=json',
              'get-extended-program-list': API_RTV + 'GetExtendedProgramList?client=json&filter_deleted=false&ext_program_channel_ids={ext_program_channel_ids}',
              'get-recording-ticket-list': API_RTV + 'GetRecordingTicketList?client=json',
              'get-tvshow-season-list': API_RTV + 'GetVideoTvShowSeasonList?client=json&series_external_id={series_external_id}',
@@ -41,4 +41,6 @@ endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_
              'open-session': 'https://sm.orangetv.orange.es/pc/api/sm/v1/openSession?type=live&contentId={contentId}&deviceId={deviceId}&accountId={accountId}',
              'login-rtv': API_RTV + 'Login?client=json',
              'login-reco': API_RECO + 'Login?client=json',
+             'add-to-wishlist': API_RECO + 'AddToWishList?external_content_id={id}&client=json',
+             'remove-from-wishlist': API_RECO + 'RemoveFromWishList?external_content_id={id}&client=json',
             }

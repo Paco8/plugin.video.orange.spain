@@ -204,7 +204,7 @@ def play(params):
   xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
 
-def add_videos(category, ctype, videos):
+def add_videos(category, ctype, videos, from_wishlist=False):
   #LOG("category: {} ctype: {}".format(category, ctype))
   xbmcplugin.setPluginCategory(_handle, category)
   xbmcplugin.setContent(_handle, ctype)
@@ -275,8 +275,16 @@ def add_videos(category, ctype, videos):
             menu_items.append(record_season_action)
 
       if t['stream_type'] == 'rec':
-          action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'])
-          menu_items.append((addon.getLocalizedString(30173), "RunPlugin(" + action + ")"))
+        action = get_url(action='delete_recording', id=t['id'], name=t['info']['title'])
+        menu_items.append((addon.getLocalizedString(30173), "RunPlugin(" + action + ")"))
+
+      if 'wl_id' in t:
+        if from_wishlist:
+          action = get_url(action='remove_from_wishlist', id=t['wl_id'])
+          menu_items.append((addon.getLocalizedString(30176), "RunPlugin(" + action + ")"))
+        else:
+          action = get_url(action='add_to_wishlist', id=t['wl_id'])
+          menu_items.append((addon.getLocalizedString(30175), "RunPlugin(" + action + ")"))
 
       if 'playback_url' in t:
         url += '&playback_url=' + quote_plus(t['playback_url'])
@@ -289,6 +297,19 @@ def add_videos(category, ctype, videos):
       list_item = xbmcgui.ListItem(label = title_name)
       list_item.setInfo('video', t['info'])
       list_item.setArt(t['art'])
+
+      menu_items = []
+      if 'wl_id' in t:
+        if from_wishlist:
+          action = get_url(action='remove_from_wishlist', id=t['wl_id'])
+          menu_items.append((addon.getLocalizedString(30176), "RunPlugin(" + action + ")"))
+        else:
+          action = get_url(action='add_to_wishlist', id=t['wl_id'])
+          menu_items.append((addon.getLocalizedString(30175), "RunPlugin(" + action + ")"))
+
+      if len(menu_items) > 0:
+        list_item.addContextMenuItems(menu_items)
+
       xbmcplugin.addDirectoryItem(_handle, get_url(action='series', id=t['id'], name=title_name), list_item, True)
     elif t['type'] == 'season':
       list_item = xbmcgui.ListItem(label = title_name)
@@ -299,7 +320,8 @@ def add_videos(category, ctype, videos):
       list_item = xbmcgui.ListItem(label = title_name)
       #list_item.setInfo('video', t['info'])
       #list_item.setArt(t['art'])
-      xbmcplugin.addDirectoryItem(_handle, get_url(action='category', id=t['id'], name=title_name), list_item, True)
+      id = t['entry_point'] if 'entry_point' in t else t['id']
+      xbmcplugin.addDirectoryItem(_handle, get_url(action='category', id=id, name=title_name), list_item, True)
 
   xbmcplugin.endOfDirectory(_handle)
 
@@ -466,6 +488,25 @@ def delete_recording(id, name):
     o.delete_recording(id)
     xbmc.executebuiltin("Container.Refresh")
 
+def add_to_wishlist(id):
+  LOG('add_to_wishlist: {}'.format(id))
+  try:
+    data = o.add_to_wishlist(id)
+    if data['response']['status'] == 'SUCCESS':
+      show_notification(addon.getLocalizedString(30177), xbmcgui.NOTIFICATION_INFO)
+  except Exception as e:
+    show_notification(str(e))
+
+def remove_from_wishlist(id):
+  LOG('remove_from_wishlist: {}'.format(id))
+  try:
+    data = o.remove_from_wishlist(id)
+    if data['response']['status'] == 'SUCCESS':
+      show_notification(addon.getLocalizedString(30178), xbmcgui.NOTIFICATION_INFO)
+      xbmc.executebuiltin("Container.Refresh")
+  except Exception as e:
+    show_notification(str(e))
+
 def iptv(params):
   LOG('iptv: params: {}'.format(params))
   if o.logged:
@@ -513,7 +554,7 @@ def router(paramstring):
         play(params)
     elif params['action'] == 'wishlist':
       # Wishlist
-      add_videos(addon.getLocalizedString(30102), 'movies', o.get_wishlist()) # Wishlist
+      add_videos(addon.getLocalizedString(30102), 'movies', o.get_wishlist(), from_wishlist=True) # Wishlist
     elif params['action'] == 'recordings':
       # Recordings
       add_videos(addon.getLocalizedString(30103), 'movies', o.get_recordings()) # Recordings
@@ -543,6 +584,10 @@ def router(paramstring):
       list_epg(params)
     elif params['action'] == 'delete_recording':
       delete_recording(params['id'], params['name'])
+    elif params['action'] == 'add_to_wishlist':
+      add_to_wishlist(params['id'])
+    elif params['action'] == 'remove_from_wishlist':
+      remove_from_wishlist(params['id'])
     elif params['action'] == 'export_epg_now':
       export_epg_now()
     elif 'iptv' in params['action']:
