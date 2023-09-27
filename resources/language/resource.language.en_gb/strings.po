@@ -494,3 +494,11 @@ msgstr ""
 msgctxt "#30401"
 msgid "{} hours remaining"
 msgstr ""
+
+msgctxt "#30450"
+msgid "Buy the developer a coffee"
+msgstr ""
+
+msgctxt "#30451"
+msgid "If you find this addon useful you can buy the developer a coffee:"
+msgstr ""

@@ -460,6 +460,14 @@ msgctxt "#30401"
 msgid "{} hours remaining"
 msgstr "quedan {} horas"
 
+msgctxt "#30450"
+msgid "Buy the developer a coffee"
+msgstr "Invita al programador a un café"
+
+msgctxt "#30451"
+msgid "If you find this addon useful you can buy the developer a coffee:"
+msgstr "Si este addon es útil para ti puedes invitar al programador a un café:"
+
 #~ msgctxt "#30040"
 #~ msgid "Use only for these languages (e.g.: es en pt):"
 #~ msgstr "Usar solo para estos idiomas (ej: es en pt):"

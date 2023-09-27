@@ -6,6 +6,8 @@
         <setting label="30321" type="bool" id="age_rating" default="false" enable="eq(-1,true)"/>
         <setting label="30018" type="bool" id="force_hd" default="false"/>
         <setting label="30019" type="action" id="is_settings" action="Addon.OpenSettings(inputstream.adaptive)" enable="System.HasAddon(inputstream.adaptive)" option="close"/>
+        <setting type="sep"/>
+        <setting label="30450" type="action" id="donation" action="RunPlugin(plugin://plugin.video.orange.spain?action=show_donation_dialog)" option="close"/>
     </category>
     <category label="30002">
         <setting label="30011" type="bool" id="manifest_modification" default="true"/>
