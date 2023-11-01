@@ -4,7 +4,8 @@
 
 from __future__ import unicode_literals, absolute_import, division
 
-API_URL = 'https://pc.orangetv.orange.es/pc/api/'
+#API_URL = 'https://pc.orangetv.orange.es/pc/api/'
+API_URL = 'https://smarttv.orangetv.orange.es/stb/api/'
 API_RTV = API_URL + 'rtv/v1/'
 API_RECO = API_URL + 'reco/v1/'
 API_IMAGES = API_RTV + 'images'

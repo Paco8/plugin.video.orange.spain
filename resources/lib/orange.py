@@ -41,8 +41,8 @@ class Orange(object):
         'Accept-Language': 'es-ES,es;q=0.9',
         'Origin': 'https://orangetv.orange.es',
         'Referer': 'https://orangetv.orange.es/',
-        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'
-        #'User-Agent': 'okhttp/4.10.0'
+        #'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'
+        'User-Agent': 'okhttp/4.10.0'
       }
       self.net = Network()
       self.net.headers = headers
@@ -910,7 +910,6 @@ class Orange(object):
     def download_bouquet(self):
       url = endpoints['get-bouquet-list']
       data = self.load_json(url)
-      self.cache.save_file('bouquet.json', json.dumps(data, ensure_ascii=False))
       return data
 
     def download_channels(self, bouquet):
@@ -920,7 +919,6 @@ class Orange(object):
       response = self.net.session.get(url, headers=headers)
       content = response.content.decode('utf-8')
       data = json.loads(content)
-      self.cache.save_file('channels2.json', json.dumps(data, ensure_ascii=False))
 
       # Get response cookies
       cookie_dict = requests.utils.dict_from_cookiejar(response.cookies)
@@ -935,6 +933,7 @@ class Orange(object):
         data = json.loads(content)
       else:
         data = self.download_bouquet()
+        self.cache.save_file('bouquet.json', json.dumps(data, ensure_ascii=False))
 
       #LOG(json.dumps(data, indent=4))
       bouquet = data['response'][0]['id']
@@ -944,6 +943,7 @@ class Orange(object):
         data = json.loads(content)
       else:
         data, _ = self.download_channels(bouquet)
+        self.cache.save_file('channels2.json', json.dumps(data, ensure_ascii=False))
 
       for d in data['response']:
         t = {}
@@ -1207,7 +1207,7 @@ class Orange(object):
       self.cookie = new_cookie
 
       # Get missing part of the cookie from the channels response header
-      if True:
+      if False:
         data = self.download_bouquet()
         bouquet = data['response'][0]['id']
         _, response_cookie = self.download_channels(bouquet)
