@@ -925,6 +925,19 @@ class Orange(object):
       response_cookie = '; '.join([key + '=' + value for key, value in cookie_dict.items()])
       return data, response_cookie
 
+    def download_subscribed_channels(self):
+      url = endpoints['get-subscribed-channels']
+      headers = self.net.headers.copy()
+      headers['Cookie'] = self.cookie
+      response = self.net.session.get(url, headers=headers)
+      content = response.content.decode('utf-8')
+      data = json.loads(content)
+
+      # Get response cookies
+      cookie_dict = requests.utils.dict_from_cookiejar(response.cookies)
+      response_cookie = '; '.join([key + '=' + value for key, value in cookie_dict.items()])
+      return data, response_cookie
+
     def get_channels_list(self):
       res = []
 
@@ -1208,9 +1221,10 @@ class Orange(object):
 
       # Get missing part of the cookie from the channels response header
       if False:
-        data = self.download_bouquet()
-        bouquet = data['response'][0]['id']
-        _, response_cookie = self.download_channels(bouquet)
+        #data = self.download_bouquet()
+        #bouquet = data['response'][0]['id']
+        #_, response_cookie = self.download_channels(bouquet)
+        _, response_cookie = self.download_subscribed_channels()
         LOG('response_cookie: {}'.format(response_cookie))
         if response_cookie:
           self.cookie = response_cookie +'; '+ self.cookie
