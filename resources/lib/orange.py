@@ -1167,12 +1167,13 @@ class Orange(object):
 
       url = endpoints['login-rtv'] + '&username=' + self.username
       data = {'username': self.username, 'password': decode_base64(self.password)}
-      response = self.net.session.post(url, data = data)
+      response = self.net.session.post(url, headers=headers, data=data)
       content = response.content.decode('utf-8')
       #LOG(content)
       data = json.loads(content)
       #print_json(data)
       if data['response']['status'] != 'SUCCESS':
+        LOG(content)
         return False
 
       # Identity
@@ -1220,7 +1221,7 @@ class Orange(object):
       self.cookie = new_cookie
 
       # Get missing part of the cookie from the channels response header
-      if True:
+      if False:
         #data = self.download_bouquet()
         #bouquet = data['response'][0]['id']
         #_, response_cookie = self.download_channels(bouquet)
