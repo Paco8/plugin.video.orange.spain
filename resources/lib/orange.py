@@ -1220,7 +1220,7 @@ class Orange(object):
       self.cookie = new_cookie
 
       # Get missing part of the cookie from the channels response header
-      if False:
+      if True:
         #data = self.download_bouquet()
         #bouquet = data['response'][0]['id']
         #_, response_cookie = self.download_channels(bouquet)
