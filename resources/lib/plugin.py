@@ -99,6 +99,8 @@ def play(params):
     show_notification(str(e))
     return
 
+  headers = 'User-Agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'
+
   # https://cps.purpledrm.com/wv_certificate/cert_license_widevine_com.bin
   certificate = (
      'CsECCAMSEBcFuRfMEgSGiwYzOi93KowYgrSCkgUijgIwggEKAoIBAQCZ7Vs7Mn2rXiTvw7YqlbWY'
@@ -130,16 +132,17 @@ def play(params):
     play_item.setProperty('inputstream.adaptive.license_type', 'com.microsoft.playready')
   else:
     license_url = 'https://pc.orangetv.orange.es/pc/api/rtv/v1/widevinedrm'
-    license_options = '||R{SSM}|'
+    license_options = '|R{SSM}|'
     play_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
   if addon.getSettingBool('use_proxy_for_license') and proxy:
-    license_url = '{}/license?id={}&stype={}&program_id={}&token={}&lurl={}{}'.format(proxy, id, stype, program_id, token, license_url, license_options)
-    play_item.setProperty('inputstream.adaptive.license_key', license_url)
+    license_url = '{}/license?id={}&stype={}&program_id={}&token={}&lurl={}'.format(proxy, id, stype, program_id, token, license_url)
+    play_item.setProperty('inputstream.adaptive.license_key', '{}|{}{}'.format(license_url, headers, license_options))
   else:
-    play_item.setProperty('inputstream.adaptive.license_key', '{}?token={}{}'.format(license_url, token, license_options))
+    play_item.setProperty('inputstream.adaptive.license_key', '{}?token={}|{}{}'.format(license_url, token, headers, license_options))
   play_item.setProperty('inputstream.adaptive.server_certificate', certificate);
   play_item.setProperty('inputstream.adaptive.manifest_type', manifest_type)
-  play_item.setProperty('inputstream.adaptive.stream_headers', 'User-Agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0')
+  play_item.setProperty('inputstream.adaptive.stream_headers', headers)
+  play_item.setProperty('inputstream.adaptive.manifest_headers', headers)
 
   if stype == 'tv' and program_id:
     play_item.setProperty('inputstream.adaptive.play_timeshift_buffer', 'true')
