@@ -30,7 +30,7 @@ class Orange(object):
 
     cookie = ''
     device = {'id': '', 'type': 'SmartTV'}
-    hd_devices = ['SmartTV', 'FireTV', 'Chromecast', 'AKS19']
+    hd_devices = ['SmartTV', 'FireTV', 'Chromecast', 'GoogleStick', 'AKS19']
 
     add_extra_info = False
 
@@ -105,6 +105,7 @@ class Orange(object):
            'Tablet_Android': 'https://android.orangetv.orange.es/mob/api/rtv/v1/drm',
            'SmartTV': 'https://smarttv.orangetv.orange.es/stv/api/rtv/v1/drm',
            'Chromecast': 'https://cc.orangetv.orange.es/stv/api/rtv/v1/drm',
+           'GoogleStick': 'https://smarttv.orangetv.orange.es/stv/api/rtv/v1/drm',
            'AKS19': 'https://stb.orangetv.orange.es/stb/api/rtv/v1/drm'}
       #print_json(l)
       return l.get(self.device['type'], 'https://pc.orangetv.orange.es/pc/api/rtv/v1/widevinedrm')

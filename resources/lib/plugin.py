@@ -128,17 +128,17 @@ def play(params):
   play_item = xbmcgui.ListItem(path= playback_url)
   if format(addon.getSetting('drm_type')) == 'Playready':
     license_url = o.get_license_url()
-    license_options = ''
+    LOG('license_url: {}'.format(license_url))
+    headers += '&Content-Type=text/xml&SOAPAction=http://schemas.microsoft.com/DRM/2007/03/protocols/AcquireLicense'
     play_item.setProperty('inputstream.adaptive.license_type', 'com.microsoft.playready')
   else:
     license_url = 'https://pc.orangetv.orange.es/pc/api/rtv/v1/widevinedrm'
-    license_options = '|R{SSM}|'
     play_item.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
   if addon.getSettingBool('use_proxy_for_license') and proxy:
     license_url = '{}/license?id={}&stype={}&program_id={}&token={}&lurl={}'.format(proxy, id, stype, program_id, token, license_url)
-    play_item.setProperty('inputstream.adaptive.license_key', '{}|{}{}'.format(license_url, headers, license_options))
+    play_item.setProperty('inputstream.adaptive.license_key', '{}|{}|R{{SSM}}|'.format(license_url, headers))
   else:
-    play_item.setProperty('inputstream.adaptive.license_key', '{}?token={}|{}{}'.format(license_url, token, headers, license_options))
+    play_item.setProperty('inputstream.adaptive.license_key', '{}?token={}|{}|R{{SSM}}|'.format(license_url, token, headers))
   play_item.setProperty('inputstream.adaptive.server_certificate', certificate);
   play_item.setProperty('inputstream.adaptive.manifest_type', manifest_type)
   play_item.setProperty('inputstream.adaptive.stream_headers', headers)
