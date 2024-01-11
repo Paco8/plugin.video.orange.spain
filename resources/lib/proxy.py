@@ -398,6 +398,15 @@ class RequestHandler(BaseHTTPRequestHandler):
             LOG('isa_data length: {}'.format(length))
             LOG('isa_data: {}'.format(encode_base64(isa_data)))
 
+            headers = {
+              'Accept': '*/*',
+              'Origin': 'https://orangetv.orange.es',
+              'Referer': 'https://orangetv.orange.es/',
+              'Sec-Fetch-Dest': 'empty',
+              'Sec-Fetch-Mode': 'cors',
+              'Sec-Fetch-Site': 'same-site',
+            }
+
             token = params['token']
             LOG('token: {}'.format(token))
             LOG('previous_tokens: {}'.format(previous_tokens))
@@ -413,8 +422,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             url = '{}?token={}'.format(params['lurl'], quote_plus(token))
             LOG('license url: {}'.format(url))
-            response = session.post(url, data=isa_data)
-            license_data = content= response.content
+            response = session.post(url, data=isa_data, headers=headers)
+            license_data = response.content
+
             LOG('license response length: {}'.format(len(license_data)))
             LOG('license response: {}'.format(encode_base64(license_data)))
             if is_ascii(license_data):

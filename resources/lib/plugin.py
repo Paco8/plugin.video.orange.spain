@@ -99,7 +99,17 @@ def play(params):
     show_notification(str(e))
     return
 
-  headers = 'User-Agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'
+  headers = {
+       'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0',
+       'Accept': '*/*',
+       'Origin': 'https://orangetv.orange.es',
+       'Referer': 'https://orangetv.orange.es/',
+       'Sec-Fetch-Dest': 'empty',
+       'Sec-Fetch-Mode': 'cors',
+       'Sec-Fetch-Site': 'same-site',
+       'Expect': ''
+  }
+  headers = urlencode(headers)
 
   # https://cps.purpledrm.com/wv_certificate/cert_license_widevine_com.bin
   certificate = (
