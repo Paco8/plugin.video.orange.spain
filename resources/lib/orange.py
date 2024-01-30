@@ -18,6 +18,7 @@ from .network import Network
 from .cache import Cache
 from .timeconv import *
 from .endpoints import endpoints, API_IMAGES
+from .useragent import useragent
 
 def date2str(timestamp, format='%d/%m/%Y %H:%M:%S'):
   return timestamp2str(timestamp, format)
@@ -41,8 +42,8 @@ class Orange(object):
         'Accept-Language': 'es-ES,es;q=0.9',
         'Origin': 'https://orangetv.orange.es',
         'Referer': 'https://orangetv.orange.es/',
-        #'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'
-        'User-Agent': 'okhttp/4.10.0'
+        #'User-Agent': useragent,
+        'User-Agent': 'okhttp/4.10.0',
       }
       self.net = Network()
       self.net.headers = headers
@@ -92,6 +93,8 @@ class Orange(object):
       headers['Cookie'] = self.cookie
       #print_json(headers)
       content = self.net.load_url(url, headers)
+      if not content and check_errors:
+         raise Exception('No response')
       data = json.loads(content)
       if check_errors and ('response' in data) and ('status' in data['response']) and data['response']['status'] == 'FAILURE':
          raise Exception(data['response']['message'])
@@ -1052,7 +1055,9 @@ class Orange(object):
       return videos
 
     def check_video_in_ticket_list(self, id):
-      data = self.load_json(endpoints['get-video-ticket-list'])
+      url = endpoints['get-video-ticket-list']
+      #LOG(url)
+      data = self.load_json(url)
       #print_json(data)
       for t in data['response']:
         if t['videoExternalId'] == id:
@@ -1064,7 +1069,7 @@ class Orange(object):
       import uuid
       terminal_identifier = 'CHROME_' + str(uuid.uuid4()).upper()
       url = endpoints['order-video'].format(external_video_id=id, model_external_id=self.device['type'], terminal_identifier=terminal_identifier)
-      data = self.load_json(url)
+      data = self.load_json(url, check_errors=False)
       return data
 
     def get_video_playback_url(self, id):
@@ -1079,6 +1084,8 @@ class Orange(object):
 
     def get_u7d_playback_url(self, id):
       data = self.get_video_info(id)
+      #print_json(data)
+      video_id = data['response'].get('id')
 
       program_id = '';
       for d in data['response']['metadata']:
@@ -1092,6 +1099,7 @@ class Orange(object):
 
       url = endpoints['get-u7d-playing-info'].format(channel_external_id=external_channel_id, program_external_id=program_id, serial_number=self.device['id'])
       data = self.load_json(url)
+      data['video_id'] = video_id
       return data
 
     def get_tv_playback_url(self, id):
@@ -1100,24 +1108,27 @@ class Orange(object):
       return data
 
     def get_tv_playback_url_start(self, id, program_external_id):
-     url = endpoints['get-u7d-playing-info'].format(channel_external_id=id, program_external_id=program_external_id, serial_number=self.device['id'])
-     data = self.load_json(url)
-     return data
+      url = endpoints['get-u7d-playing-info'].format(channel_external_id=id, program_external_id=program_external_id, serial_number=self.device['id'])
+      data = self.load_json(url)
+      return data
 
     def get_playback_url(self, id, stype, program_id = None):
       playback_url = None
       token = None
       source_type = ''
+      video_id = None
       if stype == 'vod':
         data = self.get_video_playback_url(id)
         LOG('data: {}'.format(data))
         playback_url = data['response']['url']
         token = data['response']['token']
         license_url = data['response']['license_url']
+        video_id = data['response']['id']
         LOG('license_url: {}'.format(license_url))
       else:
         if stype == 'rec':
           data = self.get_recording_playback_url(id)
+          video_id = id
         elif stype == 'tv':
           if program_id:
             data = self.get_tv_playback_url_start(id, program_id)
@@ -1125,16 +1136,69 @@ class Orange(object):
             data = self.get_tv_playback_url(id)
         elif stype == 'u7d':
           data = self.get_u7d_playback_url(id)
+          video_id = data.get('video_id')
         LOG('data: {}'.format(data))
         playback_url = data['response']['playingUrl']
         token = data['response']['casToken']
         source_type = data['response']['sourceType'];
-      return {'playback_url': playback_url, 'token': token, 'source_type': source_type}
+      return {'playback_url': playback_url, 'token': token, 'source_type': source_type, 'video_id': video_id}
 
     def open_session(self, id):
       url = endpoints['open-session'].format(contentId=id, deviceId=self.device['id'], accountId=self.username)
       data = self.load_json(url)
       return data
+
+    def mark_position_vod(self, video_id, video_external_id, position):
+      url = endpoints['mark-position-vod'].format(video_id=video_id, video_external_id=video_external_id, position=position)
+      LOG(url)
+      data = self.load_json(url)
+      return data
+
+    def mark_position_recording(self, recording_id, position):
+      url = endpoints['mark-position-recording'].format(recording_id=recording_id, position=position)
+      LOG(url)
+      data = self.load_json(url)
+      return data
+
+    def get_continue_watching(self):
+      data = []
+      for source in ['vod', 'personal-recording']:
+        url = endpoints['get-viewing-positions'].format(offset=0, limit=50, view_source=source)
+        data += self.load_json(url)
+      #self.cache.save_file('continue.json', json.dumps(data, ensure_ascii=False))
+
+      res = []
+      for d in data:
+        c = d['content']
+        id = c['id']
+        if d['viewSource'] == 'VOD':
+          id = id.replace('_JIT', '') + '_PAGE_HD'
+        t = {'type': 'movie', 'subscribed': True}
+        t['info'] = {'mediatype': 'movie'}
+        t['id'] = id
+        t['info']['duration'] = c['duration']
+
+        if d['viewSource'] == 'VOD' and c['type'] == 'Episode':
+          t['info']['title'] = '{} {}x{} - {}'.format(c['seriesName'], c['seasonNumber'], c['episodeNumber'], c['name'])
+          t['art'] = self.get_art(c['seriesImages'], 'path')
+        else:
+          t['info']['title'] = c['name']
+          t['art'] = self.get_art(c['images'], 'path')
+
+        if d['viewSource'] == 'PERSONAL_RECORDING':
+          t['stream_type'] = 'rec'
+        else:
+          if 'U7D' in id:
+            t['stream_type'] = 'u7d'
+          else:
+            t['stream_type'] = 'vod'
+
+        t['stream_position'] = d['viewDuration']
+
+        res.append(t)
+
+      #return data
+      return res
 
     def get_identity_cookie(self, text):
       identity = ''

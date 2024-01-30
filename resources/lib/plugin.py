@@ -34,6 +34,7 @@ from .log import LOG
 from .orange import Orange
 from .addon import *
 from .gui import *
+from .useragent import useragent
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
@@ -63,8 +64,8 @@ def play(params):
       show_notification(addon.getLocalizedString(30203))
       return
 
-    if stype == 'vod':
-      if not o.check_video_in_ticket_list(id):
+    if stype in ['vod', 'u7d']:
+      if True: #not o.check_video_in_ticket_list(id):
         data = o.order_video(id)
         LOG('order_video: data: {}'.format(data))
 
@@ -74,6 +75,7 @@ def play(params):
     playback_url = i['playback_url']
     token = i['token']
     source_type = i['source_type']
+    video_id = i.get('video_id')
 
     manifest_type = 'ism'
     if source_type == 'MPEGDash':
@@ -100,7 +102,7 @@ def play(params):
     return
 
   headers = {
-       'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0',
+       'User-Agent': useragent,
        'Accept': '*/*',
        'Origin': 'https://orangetv.orange.es',
        'Referer': 'https://orangetv.orange.es/',
@@ -216,8 +218,46 @@ def play(params):
   play_item.setContentLookup(False)
   xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
+  if addon.getSettingBool('send_progress') and stype in ['vod', 'u7d', 'rec']:
+    LOG('**** id: {} video_id: {}'.format(id, video_id))
 
-def add_videos(category, ctype, videos, from_wishlist=False):
+    def send_position(position):
+      position = int(position * 1000)
+      try:
+        if stype in ['vod', 'u7d']:
+         data = o.mark_position_vod(video_id, id, position)
+         LOG(data)
+        elif stype == 'rec':
+         data = o.mark_position_recording(id, position)
+         LOG(data)
+      except Exception as e:
+         LOG('Exception error: {}'.format(str(e)))
+
+    from .player import SkyPlayer
+    player = SkyPlayer()
+    monitor = xbmc.Monitor()
+    last_pos = 0
+    total_time = 0
+    start_time = time.time()
+    interval = addon.getSettingInt('progress_interval')
+    if interval < 20: interval = 20
+    LOG('progress_interval: {}'.format(interval))
+    while not monitor.abortRequested() and player.running:
+      monitor.waitForAbort(10)
+      if player.isPlaying():
+        last_pos = player.getTime()
+        if total_time == 0: total_time = player.getTotalTime()
+        LOG('**** position: {}'.format(last_pos))
+        if time.time() > (start_time + interval):
+          start_time = time.time()
+          send_position(last_pos)
+    LOG('**** playback finished')
+    LOG('**** last_pos: {} total_time: {}'.format(last_pos, total_time))
+    if (total_time - last_pos) < 20: last_pos = total_time
+    if last_pos > interval:
+      send_position(last_pos)
+
+def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
   #LOG("category: {} ctype: {}".format(category, ctype))
   xbmcplugin.setPluginCategory(_handle, category)
   xbmcplugin.setContent(_handle, ctype)
@@ -245,6 +285,9 @@ def add_videos(category, ctype, videos, from_wishlist=False):
     if t['type'] == 'movie':
       list_item = xbmcgui.ListItem(label = title_name)
       list_item.setProperty('IsPlayable', 'true')
+      if 'stream_position' in t:
+        list_item.setProperty('ResumeTime', str(t['stream_position']))
+        list_item.setProperty('TotalTime', str(t['info']['duration']))
       list_item.setInfo('video', t['info'])
 
       if t['info']['mediatype'] == 'episode':
@@ -336,7 +379,7 @@ def add_videos(category, ctype, videos, from_wishlist=False):
       id = t['entry_point'] if 'entry_point' in t else t['id']
       xbmcplugin.addDirectoryItem(_handle, get_url(action='category', id=id, name=title_name), list_item, True)
 
-  xbmcplugin.endOfDirectory(_handle)
+  xbmcplugin.endOfDirectory(_handle, cacheToDisc=cacheToDisc)
 
 def list_vod():
   open_folder(addon.getLocalizedString(30111)) # VOD
@@ -568,6 +611,8 @@ def router(paramstring):
     elif params['action'] == 'wishlist':
       # Wishlist
       add_videos(addon.getLocalizedString(30102), 'movies', o.get_wishlist(), from_wishlist=True) # Wishlist
+    elif params['action'] == 'continue-watching':
+      add_videos(addon.getLocalizedString(30122), 'movies', o.get_continue_watching(), cacheToDisc=False) # Continue watching
     elif params['action'] == 'recordings':
       # Recordings
       add_videos(addon.getLocalizedString(30103), 'movies', o.get_recordings()) # Recordings
@@ -619,6 +664,7 @@ def router(paramstring):
       add_menu_option(addon.getLocalizedString(30107), get_url(action='epg'), icon='epg.png') # EGP
       add_menu_option(addon.getLocalizedString(30102), get_url(action='wishlist'), icon='mylist.png') # My list
       add_menu_option(addon.getLocalizedString(30103), get_url(action='recordings'), icon='recording.png') # Recordings
+      add_menu_option(addon.getLocalizedString(30122), get_url(action='continue-watching'), icon='continue.png') # Continue watching
       add_menu_option(addon.getLocalizedString(30111), get_url(action='vod'), icon='vod.png') # VOD
       add_menu_option(addon.getLocalizedString(30112), get_url(action='search'), icon='search.png') # Search
       add_menu_option(addon.getLocalizedString(30108), get_url(action='devices'), icon='devices.png') # Devices
