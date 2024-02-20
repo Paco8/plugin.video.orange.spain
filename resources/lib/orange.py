@@ -42,8 +42,8 @@ class Orange(object):
         'Accept-Language': 'es-ES,es;q=0.9',
         'Origin': 'https://orangetv.orange.es',
         'Referer': 'https://orangetv.orange.es/',
-        #'User-Agent': useragent,
-        'User-Agent': 'okhttp/4.10.0',
+        'User-Agent': useragent,
+        #'User-Agent': 'okhttp/4.10.0',
       }
       self.net = Network()
       self.net.headers = headers
@@ -739,32 +739,32 @@ class Orange(object):
 
       return res
 
-    def download_epg(self, day = None):
+    def download_epg(self, datestr=None):
       from datetime import datetime,timedelta
 
-      if day == None:
+      if not datestr:
         cache_filename = 'epg.json'
-        day = datetime.today()
+        date = datetime.today()
         days = 2
+        hours = []
+        for n in range(0, days):
+          datestr = date.strftime('%Y%m%d')
+          hours += [datestr+ '_8h_1', datestr + '_8h_2', datestr + '_8h_3']
+          date += timedelta(days=1)
       else:
-        cache_filename = 'epg_' + day.strftime('%Y%m%d') + '.json'
-        days = 1
+        cache_filename = 'cache/epg_' + datestr + '.json'
+        hours = [datestr+ '_8h_1', datestr + '_8h_2', datestr + '_8h_3']
 
       content = self.cache.load(cache_filename, 12*60)
       if content:
         return json.loads(content)
-
-      hours = []
-      for n in range(0, days):
-        datestr = day.strftime('%Y%m%d')
-        hours += [datestr+ '_8h_1', datestr + '_8h_2', datestr + '_8h_3']
-        day += timedelta(days=1)
 
       epg = {}
       for h in hours:
         filename = h + '.json'
         #url = 'https://epg.orangetv.orange.es/epg/Smartphone_Android/3_PRO/' + filename
         url = 'https://epg.orangetv.orange.es/epg/Smartphone_Android/1_PRO/' + filename
+        #LOG(url)
         data = self.load_json(url)
 
         #print(data)
@@ -778,9 +778,9 @@ class Orange(object):
       self.cache.save_file(cache_filename, json.dumps(epg, ensure_ascii=False))
       return epg
 
-    def get_epg(self):
+    def get_epg(self, date=None):
       from datetime import datetime
-      channels = self.download_epg()
+      channels = self.download_epg(date)
       epg = {}
       for id in channels:
         if not id in epg: epg[id] = []
@@ -1019,8 +1019,8 @@ class Orange(object):
       t['art'] = self.get_art(data['attachments'])
       if 'prName' in data: t['info']['mpaa'] = data['prName'].replace('ML_', '')
 
-    def epg_to_movies(self, channel_id):
-      epg = self.get_epg()
+    def epg_to_movies(self, channel_id, date=None):
+      epg = self.get_epg(date=date)
       videos = []
       if not channel_id in epg: return videos
       for p in epg[channel_id]:
@@ -1286,7 +1286,7 @@ class Orange(object):
       self.cookie = new_cookie
 
       # Get missing part of the cookie from the channels response header
-      if False:
+      if '/pc/' in url:
         #data = self.download_bouquet()
         #bouquet = data['response'][0]['id']
         #_, response_cookie = self.download_channels(bouquet)

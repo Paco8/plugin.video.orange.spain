@@ -391,8 +391,17 @@ def list_vod():
 
 def list_epg(params):
   LOG('list_epg: {}'.format(params))
+  from datetime import datetime, timedelta
+  from .timeconv import my_strftime
   if 'id' in params:
-    add_videos(params['name'], 'movies', o.epg_to_movies(params['id']))
+    if not 'date' in params:
+      today = datetime.today()
+      for i in range(6, 0, -1):
+        past_date = today - timedelta(days=i)
+        date_str = past_date.strftime('%Y%m%d')
+        display_str = my_strftime(past_date, '%a %d')
+        add_menu_option(display_str, get_url(action='epg', id=params['id'], name=params['name'], date=date_str))
+    add_videos(params['name'], 'movies', o.epg_to_movies(params['id'], params.get('date')))
   else:
     channels = o.get_channels_list()
     open_folder(addon.getLocalizedString(30107)) # EPG
