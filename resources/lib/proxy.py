@@ -57,6 +57,7 @@ manifest_type = None
 subtrack_ids = []
 
 timeout = 2
+ms_offset = 0
 
 save_log = False
 if save_log:
@@ -101,10 +102,17 @@ def download_file(url, timeout=5):
   return response.content, 200
 
 
-def download_subs(url, multiple_fragments=False, timeshift=0, relative=True, timestamp=None):
+def download_subs(url, timeshift=0, timestamp_workaround=False):
+    global ms_offset
+
     def download(url):
       data, _ = download_file(url, timeout=timeout)
       return data
+
+    def next_offset(a):
+      a += 1
+      if a > 4: a = 0
+      return a
 
     def add_text_to_box(subtext, binary=None):
       import struct
@@ -139,63 +147,41 @@ def download_subs(url, multiple_fragments=False, timeshift=0, relative=True, tim
       else:
         return binary
 
-
-    # Sometimes kodi skips one fragment. It seems that loading
-    # two fragments at a time solves the problem.
-    fragments = []
-    #multiple_fragments = False
-
-    if timestamp is not None:
-      seq = timestamp // 20000000
-      LOG('timestamp: {} seq:{}'.format(timestamp, seq))
-      if multiple_fragments:
-        #next_timestamp = (seq+1) * 20000000
-        next_timestamp = timestamp + 20000000
-        LOG('next_timestamp: {}'.format(next_timestamp))
-        new_url = url.replace('='+str(timestamp), '='+str(next_timestamp))
-        LOG('new_url: {}'.format(new_url))
-        if (seq % 2) == 0:
-          fragments.append(download(url))
-          fragments.append(download(new_url))
-        else:
-          content = ''
-          SLOG('skipping {}'.format(timestamp))
-      else:
-        fragments.append(download(url))
-    else:
-      fragments.append(download(url))
-
-    LOG('number of fragments: {}'.format(len(fragments)))
-
+    content = download(url)
     lines = '<?xml version="1.0" encoding="utf-8"?><tt xml:lang="spa"><head></head><body><div>'
 
     subtext = b''
     sublines = ''
     binary = None
-    for frag in range(0, len(fragments)):
-      content = fragments[frag]
-      if not content: break
+
+    if content:
       pos = content.find(b'<?xml')
-      SLOG('frag: {}'.format(frag))
       if pos > -1:
         binary = content[0:pos]
         subtext = content[pos:]
-        SLOG('frag: {} length: {}'.format(frag, len(subtext)))
+        SLOG('length: {}'.format(len(subtext)))
+        LOG('timestamp_workaround: {}'.format(timestamp_workaround))
         #LOG(subtext)
 
         if subtext:
-          ttml.shift = (frag * 2000) if relative else 0
-          ttml.shift += timeshift
+          ttml.shift = timeshift
           LOG('ttml.shift: {}'.format(ttml.shift))
           ttml.parse_ttml_from_string(subtext)
           for entry in ttml.entries:
             #LOG('ms_begin: {}'.format(entry['ms_begin']))
-            start = ttml._tc.ms_to_subrip(entry['ms_begin']).replace(',', '.')
-            end = ttml._tc.ms_to_subrip(entry['ms_end']).replace(',', '.')
+            ms_begin = entry['ms_begin']
+            ms_end = entry['ms_end']
+            if timestamp_workaround:
+              ms_begin += ms_offset
+              ms_end += next_offset(ms_offset)
+            start = ttml._tc.ms_to_subrip(ms_begin).replace(',', '.')
+            end = ttml._tc.ms_to_subrip(ms_end).replace(',', '.')
             text = entry['text'].replace('\n', '<br/>')
             if kodi_version < 21: sublines += '<div>'
             sublines += '<p begin="{}" end="{}">{}</p>'.format(start, end, text)
             if kodi_version < 21: sublines += '</div>'
+            if timestamp_workaround:
+              ms_offset = next_offset(ms_offset)
 
     lines += sublines
     lines += '</div></body></tt>'
@@ -204,7 +190,7 @@ def download_subs(url, multiple_fragments=False, timeshift=0, relative=True, tim
 
     #LOG('manifest_type: {}'.format(manifest_type))
     #if manifest_type == 'ism': binary = None
-    if timestamp is not None: binary = None
+    #if timestamp is not None: binary = None
     return add_text_to_box(subtext, binary)
 
 
@@ -310,25 +296,16 @@ class RequestHandler(BaseHTTPRequestHandler):
               #if is_sub and addon.getSettingBool('use_ttml2ssa') and ((kodi_version < 21) or (kodi_version > 20 and stype == 'vod')):
               if is_sub and addon.getSettingBool('use_ttml2ssa'):
                 LOG('url: {}'.format(url))
-                timestamp = None
                 timeshift = 0
-                multiple_fragments = True
-                relative = True
-                m = re.search(r'Fragments\(.*?=(\d+)\)', url)
-                if m:
-                  timestamp = int(m.group(1))
-                  timeshift = (timestamp // 10000)
-                  if manifest_type == 'mpd':
-                    timeshift = -timeshift
-                    #multiple_fragments = False
-                    relative = False
-                  else:
-                    if stype == 'vod':
-                      multiple_fragments = False
-                    else:
-                      timeshift = 0
-                  LOG('timestamp: {} timeshift: {}'.format(timestamp, timeshift))
-                content = download_subs(url, multiple_fragments=multiple_fragments, timeshift=timeshift, relative=relative, timestamp=timestamp)
+                timestamp_workaround = True
+                if stype == 'vod':
+                  m = re.search(r'Fragments\(.*?=(\d+)\)', url)
+                  if m:
+                    timestamp = int(m.group(1))
+                    timeshift = (timestamp // 10000)
+                    timestamp_workaround = False
+                    LOG('timestamp: {} timeshift: {}'.format(timestamp, timeshift))
+                content = download_subs(url, timeshift, timestamp_workaround)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
@@ -359,7 +336,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                   #timeshift = -(timestamp // 10000)
                   timeshift = -(timestamp // 90)
                   LOG('timeshift: {}'.format(timeshift))
-                content = download_subs(url, multiple_fragments = False, timeshift=timeshift)
+                content = download_subs(url, timeshift, True)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
