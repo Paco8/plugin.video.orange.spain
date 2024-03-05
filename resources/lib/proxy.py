@@ -250,8 +250,12 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Workaround for inputstream.adaptive bug #1064
                 content = content.replace('IsLive="true"', 'IsLive="TRUE"')
 
+                # Fix Neox subtitles
+                if addon.getSettingBool('use_ttml2ssa'):
+                  content = content.replace('FourCC="DFXP"', 'FourCC="TTML"')
+
                 # Find subtitles tracks
-                matches = re.findall(r'<StreamIndex Type="text".*?Url="(.*?)"', content)
+                matches = re.findall(r'<StreamIndex.*?Type="text".*?Url="(.*?)"', content)
                 LOG('matches: {}'.format(matches))
                 subtrack_ids = []
                 for match in matches:
