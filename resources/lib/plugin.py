@@ -82,14 +82,22 @@ def play(params):
       manifest_type = 'mpd'
     elif source_type == 'HLS':
       manifest_type = 'hls'
+    elif source_type == '':
+      if '.mpd' in playback_url:
+        manifest_type = 'mpd'
+      elif '.ism' in playback_url:
+        manifest_type = 'ism'
+
     LOG('manifest_type: {}'.format(manifest_type))
 
     if addon.getSettingBool('force_hd'):
-      playback_url = playback_url.replace('dash_low.mpd', 'dash_high.mpd')
-      playback_url = playback_url.replace('dash_medium.mpd', 'dash_high.mpd')
+      playback_url = playback_url.replace('dash_low', 'dash_high')
+      playback_url = playback_url.replace('dash_medium', 'dash_high')
       playback_url = playback_url.replace('mss_medium', 'mss_high')
       #playback_url = playback_url.replace('Profil1', 'Profil2')
       #playback_url = playback_url.replace('Profil3', 'Profil2')
+      playback_url = playback_url.replace('Profil1', 'Profil3')
+      playback_url = playback_url.replace('Profil2', 'Profil3')
 
     proxy = o.cache.load_file('proxy.conf')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
