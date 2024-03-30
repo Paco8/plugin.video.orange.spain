@@ -265,6 +265,32 @@ def play(params):
     if last_pos > interval:
       send_position(last_pos)
 
+  elif stype == 'tv' and id in ['11013', '11026', '11077', '1023', '1050', '1051']:
+    household_id = o.cache.load_file('household_id.conf')
+    if household_id:
+      last_time = 0 #time.time()
+      window = xbmcgui.Window(12005)
+      label = xbmcgui.ControlLabel(0, 0, 400, 20, household_id, textColor='0xFFFFFFFF', alignment=6)
+      from .player import SkyPlayer
+      player = SkyPlayer()
+      monitor = xbmc.Monitor()
+      while not monitor.abortRequested() and player.running:
+        monitor.waitForAbort(10)
+        if player.isPlaying():
+          now = time.time()
+          if now - last_time >= 15*60:
+            last_time = now
+            #show_notification(household_id, xbmcgui.NOTIFICATION_INFO)
+            w = window.getWidth()
+            h = window.getHeight()
+            #LOG('window h: {} w: {}'.format(h, w))
+            pos_x = w-label.getWidth()-60
+            pos_y = h-200
+            label.setPosition(pos_x, pos_y)
+            window.addControl(label)
+            time.sleep(8)
+            window.removeControl(label)
+
 def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
   #LOG("category: {} ctype: {}".format(category, ctype))
   xbmcplugin.setPluginCategory(_handle, category)

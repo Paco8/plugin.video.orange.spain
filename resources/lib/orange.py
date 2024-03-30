@@ -157,6 +157,8 @@ class Orange(object):
         data = self.load_json(url)
         self.cache.save_file(cache_filename, json.dumps(data, ensure_ascii=False))
       #print_json(data)
+      household_id = data['response']['householdId']
+      self.cache.save_file('household_id.conf', str(household_id))
       res = []
       for t in data['response']['terminals']:
         dev = {}
@@ -974,6 +976,7 @@ class Orange(object):
         t['info']['title'] = str(t['dial']) +'. '+ d['name']
         t['channel_name'] = d['name']
         #t['slug'] = self.create_slug(t['info']['title'])
+        t['category'] = d.get('category')
         for att in d['attachments']:
           if att['name'] == 'LOGO':
             t['art']['icon'] = API_IMAGES + att['value']
