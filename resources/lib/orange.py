@@ -94,7 +94,7 @@ class Orange(object):
       #print_json(headers)
       content = self.net.load_url(url, headers)
       if not content and check_errors:
-         raise Exception('No response')
+         raise Exception('No se ha obtenido respuesta')
       data = json.loads(content)
       if check_errors and ('response' in data) and ('status' in data['response']) and data['response']['status'] == 'FAILURE':
          raise Exception(data['response']['message'])
@@ -1212,16 +1212,7 @@ class Orange(object):
 
     def login(self):
       # Load cookie from cache
-
-      # The cookie is valid for 4 days of so
-      # but to be sure we'll renew it after 1 day
-      # unless there are no login credentials,
-      # in this case we'll try to use the cookie
-      # the maximum number of days
-
-      ndays = 1
-      if not self.username or not self.password: ndays = 4
-      cookie = self.cache.load('cookie.conf', ndays*24*60)
+      cookie = self.cache.load('cookie.conf', 1*60)
       if cookie:
         self.cookie = cookie
         return True
