@@ -297,18 +297,19 @@ class RequestHandler(BaseHTTPRequestHandler):
               LOG('is_sub: {}'.format(is_sub))
               #is_sub = False
 
-              #if is_sub and addon.getSettingBool('use_ttml2ssa') and ((kodi_version < 21) or (kodi_version > 20 and stype == 'vod')):
               if is_sub and addon.getSettingBool('use_ttml2ssa'):
                 LOG('url: {}'.format(url))
                 timeshift = 0
-                timestamp_workaround = True
-                if stype == 'vod':
-                  m = re.search(r'Fragments\(.*?=(\d+)\)', url)
-                  if m:
-                    timestamp = int(m.group(1))
-                    timeshift = (timestamp // 10000)
-                    timestamp_workaround = False
-                    LOG('timestamp: {} timeshift: {}'.format(timestamp, timeshift))
+                timestamp_workaround = False
+                if kodi_version < 21:
+                  timestamp_workaround = True
+                  if stype == 'vod':
+                    m = re.search(r'Fragments\(.*?=(\d+)\)', url)
+                    if m:
+                      timestamp = int(m.group(1))
+                      timeshift = (timestamp // 10000)
+                      timestamp_workaround = False
+                      LOG('timestamp: {} timeshift: {}'.format(timestamp, timeshift))
                 content = download_subs(url, timeshift, timestamp_workaround)
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
@@ -331,20 +332,31 @@ class RequestHandler(BaseHTTPRequestHandler):
               SLOG('==== HTTP GET End Request {}'.format(path))
             elif manifest_type == 'mpd':
               url = manifest_base_url + path
-              if addon.getSettingBool('use_ttml2ssa') and 'subtitle' in url and 'init' not in url:
-                m = re.search(r'stpp-(\d+).m4s', url)
-                if m:
-                  timestamp = int(m.group(1))
-                  LOG('timestamp: {}'.format(timestamp))
-                  #timestamp = timestamp // 9 * 1000
-                  #timeshift = -(timestamp // 10000)
-                  timeshift = -(timestamp // 90)
-                  LOG('timeshift: {}'.format(timeshift))
-                content = download_subs(url, timeshift, True)
+              #LOG('fragment url: {}'.format(url))
+              result = None
+              if addon.getSettingBool('use_ttml2ssa'):
+                # Live channels
+                if 'subtitle' in url and 'init' not in url:
+                  timeshift = 0
+                  if kodi_version < 21:
+                    m = re.search(r'stpp-(\d+).m4s', url)
+                    if m:
+                      timestamp = int(m.group(1))
+                      LOG('timestamp: {}'.format(timestamp))
+                      #timestamp = timestamp // 9 * 1000
+                      #timeshift = -(timestamp // 10000)
+                      timeshift = -(timestamp // 90)
+                      LOG('timeshift: {}'.format(timeshift))
+                  result = download_subs(url, timeshift, True)
+                # Vod
+                elif re.search(r'textstream_\w+=\d+-(\d+)', url):
+                  result = download_subs(url, 0, False)
+
+              if result:
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
                 self.end_headers()
-                self.wfile.write(content)
+                self.wfile.write(result)
               else:
                 # Redirect
                 self.send_response(301)
