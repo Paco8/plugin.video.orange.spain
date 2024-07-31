@@ -51,7 +51,7 @@ msgstr "Usar proxy para la licencia"
 
 msgctxt "#30013"
 msgid "Fix freezes in VOD content"
-msgstr "Solucionar parones en TV a la carta"
+msgstr "Tratar de solucionar parones"
 
 msgctxt "#30016"
 msgid "Proxy timeout (ms)"

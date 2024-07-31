@@ -352,6 +352,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 elif re.search(r'textstream_\w+=\d+-(\d+)', url):
                   result = download_subs(url, 0, False)
 
+              if not result and addon.getSettingBool('proxy_streams'):# and stype == 'vod':
+                #LOG('*** using proxy for {}'.format(url))
+                result, status_code = download_file(url, timeout=timeout)
+
               if result:
                 self.send_response(200)
                 self.send_header('Content-type', 'video/mp4')
