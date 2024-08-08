@@ -834,9 +834,9 @@ class Orange(object):
       if source_type:
         if source_type not in ['SmoothStreaming', 'MPEGDash', 'HLS']:
           s += ' ('+ source_type + ')'
-        if source_type == 'MPEGDash':
+        if source_type == 'SmoothStreaming':
           s = '[COLOR cyan]' + s +'[/COLOR]'
-        elif source_type != 'SmoothStreaming':
+        elif source_type != 'MPEGDash':
           s = '[COLOR blue]' + s +'[/COLOR]'
 
       color1 = 'yellow'
