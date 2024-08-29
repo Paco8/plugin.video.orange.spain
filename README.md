@@ -46,9 +46,9 @@ En algunos dispositivos también puede ser necesario activar la opción "Usar pr
 - **`Configurar InputStream Adaptive`**: abre la configuración del addon `InputStream Adaptive`.
 
 ### Proxy
-- **`Modificar manifiesto`**: Activa las siguentes opciones.
+- **`Modificar manifiesto`**: Permite modificar las siguientes opciones.
 - **`Tratar de solucionar parones`**: trata de solucionar parones en la reproducción en contenido de TV en directo y a la carta.
-- **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas o mal alineados. Esta opción modifica los subtítulos para que aparecan correctamente.
+- **`Subtítulos mejorados`**: por defecto los subtítulos de Orange TV pueden aparecer en posiciones incorrectas o mal alineados. Esta opción modifica los subtítulos para que aparezcan correctamente.
 - **`Arreglar los nombres de idiomas`**: arregla el nombre de los idiomas de audio y subtítulos para que puedan mostrarse correctamente en Kodi.
 - **`Usar proxy para la licencia`**: esta opción puede ser necesaria para que se puedan reproducir los contenidos en determinados dispositivos o versiones antiguas de Kodi.
 
