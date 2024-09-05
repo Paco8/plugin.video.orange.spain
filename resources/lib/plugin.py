@@ -36,6 +36,8 @@ from .addon import *
 from .gui import *
 from .useragent import useragent
 
+kodi_version= int(xbmc.getInfoLabel('System.BuildVersion')[:2])
+
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
@@ -620,18 +622,38 @@ def iptv(params):
     #except:
     #  pass
 
+def create_iptv_settings():
+  from .iptv import save_iptv_settings
+  show_notification(addon.getLocalizedString(30319), xbmcgui.NOTIFICATION_INFO)
+  output_file = 'instance-settings-92.xml' if kodi_version > 19 else 'settings.xml'
+  epg_url = None
+  if addon.getSettingBool('use_external_epg'):
+    epg_url = addon.getSetting('epg_url')
+  try:
+    pvr_addon = xbmcaddon.Addon('pvr.iptvsimple')
+    pvr_dir = translatePath(pvr_addon.getAddonInfo('profile'))
+    LOG('pvr_dir: {}'.format(pvr_dir))
+    filename = os.path.join(pvr_dir, output_file)
+    if os.path.exists(filename):
+      res = xbmcgui.Dialog().yesno(addon.getLocalizedString(30322), addon.getLocalizedString(30323))
+      if res == False: return
+    save_iptv_settings(filename, 'Orange', 'orange.spain', epg_url)
+    export_epg_now()
+  except:
+    show_notification(addon.getLocalizedString(30324))
+
 def export_epg_now():
   if not o.logged: return
-  folder = addon.getSetting('epg_folder')
-  if sys.version_info[0] > 2:
-    folder = bytes(folder, 'utf-8')
-  if not folder or not os.path.isdir(folder): return
-  channels_filename = os.path.join(folder, b"orange-channels.m3u8")
-  epg_filename = os.path.join(folder, b"orange-epg.xml")
+
+  channels_filename = os.path.join(profile_dir, 'channels.m3u8')
+  epg_filename = os.path.join(profile_dir, 'epg.xml')
+
   show_notification(addon.getLocalizedString(30310), xbmcgui.NOTIFICATION_INFO)
   o.export_channels_to_m3u8(channels_filename)
-  show_notification(addon.getLocalizedString(30311), xbmcgui.NOTIFICATION_INFO)
-  o.export_epg_to_xml(epg_filename)
+
+  if not addon.getSettingBool('use_external_epg'):
+    show_notification(addon.getLocalizedString(30311), xbmcgui.NOTIFICATION_INFO)
+    o.export_epg_to_xml(epg_filename)
 
 def router(paramstring):
   """
@@ -689,6 +711,8 @@ def router(paramstring):
       add_to_wishlist(params['id'])
     elif params['action'] == 'remove_from_wishlist':
       remove_from_wishlist(params['id'])
+    elif params['action'] == 'create_iptv_settings':
+      create_iptv_settings()
     elif params['action'] == 'export_epg_now':
       export_epg_now()
     elif 'iptv' in params['action']:
