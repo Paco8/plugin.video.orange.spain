@@ -37,6 +37,10 @@ msgctxt "#30005"
 msgid "Playback"
 msgstr "Reproducción"
 
+msgctxt "#30006"
+msgid "Advanced"
+msgstr "Avanzado"
+
 msgctxt "#30010"
 msgid "DRM type"
 msgstr "Tipo de DRM"
@@ -540,6 +544,10 @@ msgstr "Ya existe una configuración para IPTV Simple.\n¿Quieres sobreescribirl
 msgctxt "#30324"
 msgid "IPTV Simple is not found"
 msgstr "No se encuentra IPTV Simple"
+
+msgctxt "#30325"
+msgid "Downloading subtitle '{}'"
+msgstr "Descargando subtítulo '{}'"
 
 msgctxt "#30400"
 msgid "{} days remaining"

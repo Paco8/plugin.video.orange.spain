@@ -31,7 +31,7 @@ class Orange(object):
 
     cookie = ''
     device = {'id': '', 'type': 'SmartTV'}
-    hd_devices = ['SmartTV', 'FireTV', 'Chromecast', 'GoogleStick', 'AKS19']
+    hd_devices = ['SmartTV', 'SmartTV_Android', 'FireTV', 'Chromecast', 'GoogleStick', 'AKS19']
 
     add_extra_info = False
 

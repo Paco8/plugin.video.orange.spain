@@ -101,6 +101,7 @@ def play(params):
       playback_url = playback_url.replace('Profil1', 'Profil3')
       playback_url = playback_url.replace('Profil2', 'Profil3')
 
+    manifest_url = playback_url
     proxy = o.cache.load_file('proxy.conf')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
       playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
@@ -199,31 +200,56 @@ def play(params):
         show_notification(addon.getLocalizedString(30320).format(t['info']['mpaa']), xbmcgui.NOTIFICATION_INFO)
     #return
 
-  # Add external subtitles
-  if stype != 'tv' and 'slug' in params:
-    slug = params['slug']
-    if 'season' in params:
-      season = int(params['season'])
-      episode = int(params['episode'])
-      subfolder = '{}/t{}/'.format(slug, season)
-      subfilter = '.*((s|S){season:02d}(e|E){episode:02d}|{season:01d}x{episode:02d}).*\.(srt|ssa)'.format(season=season, episode=episode)
-    else:
-      subfolder = ''
-      subfilter = '{}.*\.(srt|ssa)'.format(slug)
+  # Download subs
+  if stype == 'vod' and addon.getSettingBool('use_ttml2ssa'):
+    from .parsemanifest import extract_tracks, download_split_subtitle
+    from ttml2ssa import Ttml2SsaAddon
+    ttml = Ttml2SsaAddon()
+    ttml.allow_timestamp_manipulation = False
+    subtype = ttml.subtitle_type()
 
-    LOG('subfolder: {} subfilter: {}'.format(subfolder, subfilter))
-    subfiles = []
-    subfolder = '{}orange/{}'.format(translatePath('special://subtitles'), subfolder)
-    LOG('subfolder: {}'.format(subfolder))
-    if sys.version_info[0] > 2:
-      subfolder = bytes(subfolder, 'utf-8')
-      subfilter = bytes(subfilter, 'utf-8')
-    if os.path.exists(subfolder):
-      for file in os.listdir(subfolder):
-        if re.search(subfilter, file):
-          subfiles.append(subfolder + file)
-    LOG('subs: {}'.format(subfiles))
-    play_item.setSubtitles(subfiles)
+    subfolder = profile_dir + 'subtitles/'
+    if not os.path.exists(subfolder):
+      os.makedirs(subfolder)
+
+    response = o.net.session.get(manifest_url, allow_redirects=True)
+    content = response.content.decode('utf-8')
+    #LOG(content)
+    baseurl = os.path.dirname(response.url)
+    LOG('baseurl: {}'.format(baseurl))
+
+    subpaths = []
+    tracks = extract_tracks(content)
+    filter_list = addon.getSetting('ttml2ssa_filter').lower().split()
+    subtracks = []
+    if len(filter_list) > 0:
+      subtracks = [t for t in tracks['subs'] if t['lang'] in filter_list]
+      for t in subtracks:
+        if t['chunks'] < 100:
+          filename = subfolder + t['lang']
+          LOG('filename: {}'.format(filename))
+          show_notification(addon.getLocalizedString(30325).format(t['lang']), xbmcgui.NOTIFICATION_INFO)
+          sub_texts = download_split_subtitle(baseurl, t['filename'], 0, t['sec_inc'])
+          #LOG(sub_texts)
+          entries = []
+          for text in sub_texts:
+            ttml.parse_ttml_from_string(text)
+            entries.extend(ttml.entries)
+          ttml.entries = entries
+          #res = ttml.generate_srt()
+          #LOG(res)
+          if subtype != 'srt':
+            filename_ssa = filename + '.ssa'
+            ttml.write2file(filename_ssa)
+            subpaths.append(filename_ssa)
+          if subtype != 'ssa':
+            filename_srt = filename
+            if (subtype == 'both'): filename_srt += '.SRT'
+            filename_srt += '.srt'
+            ttml.write2file(filename_srt)
+            subpaths.append(filename_srt)
+      play_item.setSubtitles(subpaths)
+
 
   play_item.setContentLookup(False)
   xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)

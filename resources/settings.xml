@@ -13,10 +13,15 @@
         <setting label="30450" type="action" id="donation" action="RunPlugin(plugin://plugin.video.orange.spain?action=show_donation_dialog)" option="close"/>
         -->
     </category>
+    <category label="30004">
+        <setting id="use_ttml2ssa" type="bool" label="$ADDON[script.module.ttml2ssa 32202]" default="false"/>
+        <setting id="ssa_settings" type="action" label="$ADDON[script.module.ttml2ssa 32201]" option="close" action="Addon.OpenSettings(script.module.ttml2ssa)" visible="eq(-1,true)" subsetting="true"/>
+        <setting id="ttml2ssa_filter" label="30040" type="text" default="spa es" visible="eq(-2,true)" subsetting="true"/>
+    </category>
     <category label="30002">
         <setting label="30011" type="bool" id="manifest_modification" default="true"/>
         <setting label="30014" type="bool" id="proxy_streams" default="true" enable="eq(-1,true)" subsetting="true"/>
-        <setting id="use_ttml2ssa" type="bool" label="$ADDON[script.module.ttml2ssa 32202]" default="true" enable="eq(-2,true)" subsetting="true"/>
+        <setting label="30051" id="use_ttml2ssa_proxy" type="bool" default="true" enable="eq(-2,true)" subsetting="true"/>
         <setting label="30016" type="number" id="proxy_timeout" default="3000" enable="eq(-3,true)" visible="false" subsetting="true"/>
         <setting label="30034" type="bool" id="fix_languages" default="true" enable="eq(-4,true)" subsetting="true"/>
         <setting label="30012" type="bool" id="use_proxy_for_license" default="false"/>

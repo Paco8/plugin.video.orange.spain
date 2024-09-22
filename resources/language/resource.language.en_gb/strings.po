@@ -37,6 +37,10 @@ msgctxt "#30005"
 msgid "Playback"
 msgstr ""
 
+msgctxt "#30006"
+msgid "Advanced"
+msgstr ""
+
 # For Orange and Movistar only
 msgctxt "#30010"
 msgid "DRM type"
@@ -576,6 +580,10 @@ msgstr ""
 # For Orange and Movistar only
 msgctxt "#30324"
 msgid "IPTV Simple is not found"
+msgstr ""
+
+msgctxt "#30325"
+msgid "Downloading subtitle '{}'"
 msgstr ""
 
 msgctxt "#30400"
