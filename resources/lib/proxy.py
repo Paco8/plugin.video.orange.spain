@@ -251,7 +251,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 content = content.replace('IsLive="true"', 'IsLive="TRUE"')
 
                 # Fix Neox subtitles
-                if addon.getSettingBool('use_ttml2ssa_proxy'):
+                if addon.getSettingBool('proxy_process_subs'):
                   content = content.replace('FourCC="DFXP"', 'FourCC="TTML"')
 
                 # Find subtitles tracks
@@ -297,7 +297,7 @@ class RequestHandler(BaseHTTPRequestHandler):
               LOG('is_sub: {}'.format(is_sub))
               #is_sub = False
 
-              if is_sub and addon.getSettingBool('use_ttml2ssa_proxy'):
+              if is_sub and addon.getSettingBool('proxy_process_subs'):
                 LOG('url: {}'.format(url))
                 timeshift = 0
                 timestamp_workaround = False
@@ -334,7 +334,7 @@ class RequestHandler(BaseHTTPRequestHandler):
               url = manifest_base_url + path
               #LOG('fragment url: {}'.format(url))
               result = None
-              if addon.getSettingBool('use_ttml2ssa_proxy'):
+              if addon.getSettingBool('proxy_process_subs'):
                 # Live channels
                 if 'subtitle' in url and 'init' not in url:
                   timeshift = 0

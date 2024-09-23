@@ -208,7 +208,7 @@ def play(params):
     ttml.allow_timestamp_manipulation = False
     subtype = ttml.subtitle_type()
 
-    subfolder = profile_dir + 'subtitles/'
+    subfolder = os.path.join(profile_dir, 'subtitles')
     if not os.path.exists(subfolder):
       os.makedirs(subfolder)
 
@@ -226,8 +226,8 @@ def play(params):
       subtracks = [t for t in tracks['subs'] if t['lang'] in filter_list]
       for t in subtracks:
         if t['chunks'] < 100:
-          filename = subfolder + t['lang']
-          LOG('filename: {}'.format(filename))
+          filename = os.path.join(subfolder, t['lang'])
+          LOG('Output filename: {}'.format(filename))
           show_notification(addon.getLocalizedString(30325).format(t['lang']), xbmcgui.NOTIFICATION_INFO)
           sub_texts = download_split_subtitle(baseurl, t['filename'], 0, t['sec_inc'])
           #LOG(sub_texts)
