@@ -388,6 +388,7 @@ class Orange(object):
         #LOG(json.dumps(data, indent=4))
         if len(data['availabilities']) > 0:
           t['id'] = data['availabilities'][0]['videoId']
+          t['availability'] = {'start': data['availabilities'][0].get('startTime'), 'end': data['availabilities'][0].get('endTime')}
         else:
           try:
             d = self.get_aggregated_video_info(data['externalContentId'])
@@ -483,6 +484,7 @@ class Orange(object):
         t['slug'] = self.create_slug(t['info']['title'])
         t['start_date'] = date2str(d['startDate'], '%d/%m/%Y')
         t['end_date'] = date2str(d['windowEnd'], '%d/%m/%Y')
+        t['availability'] = {'start': d['startDate'], 'end': d['windowEnd']}
         t['info']['aired'] = date2str(d['startDate'], '%Y-%m-%d')
         if d['startDate'] > (time.time() * 1000):
           t['info']['title'] += ' ('+ t['start_date'] +')'
@@ -562,6 +564,7 @@ class Orange(object):
       for d in data['response']:
         t = {}
         t['id'] = d['uniqueVideos'][0]['externalId']
+        t['availability'] = {'start': d.get('windowStart'), 'end': d['uniqueVideos'][0].get('removalDate')}
         t['info'] = {}
         #t['type'] = 'episode'
         t['type'] = 'movie'
@@ -633,6 +636,7 @@ class Orange(object):
           t['info']['duration'] = d['duration'] / 1000
           t['info']['plot'] = d['description']
           t['info']['genre'] = self.get_genre(d['genreEntityList'])
+          t['availability'] = {'start': d.get('windowStart'), 'end': d.get('removalDate')}
           t['art'] = self.get_art(d['attachments'])
           if 'assetExternalId' in d:
             t['info_id'] = d['assetExternalId']
@@ -655,6 +659,7 @@ class Orange(object):
       res = []
       url = endpoints['search-live'].format(text=search_term, device_models=self.device['type'])
       data = self.load_json(url)
+      #self.cache.save_file('search_live.json', json.dumps(data, ensure_ascii=False))
       #print_json(data)
 
       for d in data['response']:
@@ -691,6 +696,7 @@ class Orange(object):
       services = "SVODORANGESERIES,SVODTEMATIC,SVODCANAL+Series,SVODFLIXOLE,SVODSTARZPLAY,SVODCAZA,SVODCLUB,SVODMUSICA,SVODINFANTIL,SVODDEPORTES,SVODLIFESTYLE,SVODMOTOR,SVODFRANCES,SVODANIMACION,SVODLIGA,SVODBEIN"
       url = endpoints['search-vod'].format(text=search_term, content_type=content_type, services=services)
       data = self.load_json(url)
+      #self.cache.save_file('search_vod.json', json.dumps(data, ensure_ascii=False))
       #print_json(data)
 
       for d in data['response']:

@@ -339,6 +339,19 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
     if 'subscribed' in t:
       if addon.getSettingBool('only_subscribed') and t['subscribed'] == False: continue
       t['info']['title'] = o.colorize_title(t)
+
+    if 'availability' in t:
+      ends = t['availability'].get('end', 0)
+      if ends > 0:
+        now = int(time.time()*1000)
+        n_hours = int((ends - now) / (1000 * 60 * 60))
+        n_days = int(n_hours / 24)
+        if (n_days <= 30):
+          if n_days < 1:
+            t['info']['title'] += ' [COLOR red](' + addon.getLocalizedString(30401).format(n_hours) + ')[/COLOR]'
+          else:
+            t['info']['title'] += ' [COLOR red](' + addon.getLocalizedString(30400).format(n_days) + ')[/COLOR]'
+
     title_name = t['info']['title']
 
     if sys.version_info[0] < 3: # Kodi 18
@@ -360,8 +373,8 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
       url = get_url(action='play', id=t['id'], stype=t['stream_type'])
       if 'source_type' in t:
         url += '&source_type=' + t['source_type']
-      if 'slug' in t:
-        url += '&slug=' + t['slug']
+      #if 'slug' in t:
+      #  url += '&slug=' + t['slug']
       if 'season' in t['info']:
         url += '&season=' + str(t['info']['season'])
       if 'episode' in t['info']:
