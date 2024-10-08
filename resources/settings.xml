@@ -7,6 +7,7 @@
         <setting label="30018" type="bool" id="force_hd" default="false"/>
         <setting id="send_progress" type="bool" label="30025" default="false"/>
         <setting id="progress_interval" type="number" label="30026" default="120" visible="eq(-1,true)" subsetting="true"/>
+        <setting label="30042" type="number" id="expdays" default="30"/>
         <setting label="30019" type="action" id="is_settings" action="Addon.OpenSettings(inputstream.adaptive)" enable="System.HasAddon(inputstream.adaptive)" option="close"/>
         <!--
         <setting type="sep"/>

@@ -346,7 +346,7 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
         now = int(time.time()*1000)
         n_hours = int((ends - now) / (1000 * 60 * 60))
         n_days = int(n_hours / 24)
-        if (n_days <= 30):
+        if (n_days <= addon.getSettingInt('expdays')):
           if n_days < 1:
             t['info']['title'] += ' [COLOR red](' + addon.getLocalizedString(30401).format(n_hours) + ')[/COLOR]'
           else:
