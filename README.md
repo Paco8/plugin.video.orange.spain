@@ -14,6 +14,7 @@ This addon is compatible with Kodi 18-21.
 ## Descripción
 Con este addon puedes ver los canales en directo, grabaciones, últimos 7 días y TV a la carta de Orange TV España en Kodi. Es necesario estar abonado.
 El addon es compatible con Kodi 18-21.
+Al parecer el addon también funciona con Jazztel TV.
 
 ## Instalación
 ### Instalación manual
