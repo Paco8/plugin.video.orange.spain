@@ -233,7 +233,7 @@ def play(params):
           #LOG(sub_texts)
           entries = []
           for text in sub_texts:
-            ttml.parse_ttml_from_string(text)
+            ttml.parse_ttml_from_string(text.encode('utf-8'))
             entries.extend(ttml.entries)
           ttml.entries = entries
           #res = ttml.generate_srt()
@@ -604,7 +604,7 @@ def search(params):
   open_folder(addon.getLocalizedString(30113)) # Search
   add_menu_option(addon.getLocalizedString(30113), get_url(action='search', name='new')) # New search
 
-  for i in o.search_list:
+  for i in reversed(o.search_list):
     remove_action = get_url(action='search', search_term=i, name='delete')
     cm = [(addon.getLocalizedString(30114), "RunPlugin(" + remove_action + ")")]
     add_menu_option(i.encode('utf-8'), get_url(action='search', search_term=i), cm)
