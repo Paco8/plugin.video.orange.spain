@@ -257,7 +257,8 @@ class Orange(object):
 
       res = []
       for i in data['response']:
-        res.append(i['externalId'])
+        if i['model'] == 'SVOD':
+          res.append(i['externalId'])
       return res
 
     def is_subscribed_vod(self, products, service_key='serviceExternalId'):
@@ -1321,6 +1322,42 @@ class Orange(object):
               #{'name': 'Movistar Series 2', 'id': 'SED_13040'},
               {'name': 'Películas', 'id': 'TVPLAY_14028'},
               {'name': 'Últimos 7 días', 'id': 'U7D%20TVPLAY'})
+
+    def get_rows(self):
+      headers = self.net.headers.copy()
+      headers['Cookie'] =  self.cookie
+      url = endpoints['get-rows']
+
+      data = {
+        'services': ','.join(self.entitlements),
+        'tvpacks': '140,3_PRO',
+        'bouquet_id': '3_PRO',
+        'sp': 'SP_OFFER_0000005',
+        'myTeam': 'NA',
+        'available_sp': 'SP_SVA_001,SP_SVA_002,SP_SVA_003,SP_SVA_004,SP_SVA_005,SP_SVA_006,SP_SVA_007,SP_SVA_008,SP_SVA_009,SP_SVA_010,SP_SVA_011,SP_SVA_012,SP_SVA_013,SP_SVA_014,SP_PACK_007,SP_PACK_009,SP_PACK_012,SP_PACK_014,SP_PACK_015,SP_PACK_017,SP_PACK_018,SP_PACK_019,SP_PACK_020,SP_PACK_027,SP_PACK_030,SP_PACK_031',
+        'from': 0,
+        'count': 42,
+        'external_id': 'Home_Inicio_TVPLAY',
+        'resolution': 'SD,HD',
+        'device_type': 'PC',
+      }
+      #print_json(data)
+      response = self.net.session.post(url, headers=headers, json=data)
+      content = response.content.decode('utf-8')
+      data = json.loads(content)
+      return data
+
+    def get_vod_catalog(self):
+      data = self.get_rows()
+      res = []
+      for i in data['rows']:
+        if 'title' in i and len(i['elements']) > 0:
+          for e in i['elements']:
+            entry_point = e['actions'][0]['entryPoint']
+            if 'name' in e and entry_point.startswith('/browsing'):
+              res.append({'name':e['name'], 'id': entry_point.replace('/browsing/','')})
+      res.append({'name': 'Películas', 'id': 'TVPLAY_14028'})
+      return res
 
     def export_channels(self):
       if sys.version_info[0] >= 3:

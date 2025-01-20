@@ -458,7 +458,8 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
 
 def list_vod():
   open_folder(addon.getLocalizedString(30111)) # VOD
-  listing = o.main_listing()
+  #listing = o.main_listing()
+  listing = o.get_vod_catalog()
   for l in listing:
     name = l['name']
     add_menu_option(name, get_url(action='category', name=name, id=l['id']))
