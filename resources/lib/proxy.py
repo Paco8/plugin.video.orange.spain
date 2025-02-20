@@ -90,7 +90,7 @@ def download_file(url, timeout=5):
         content_size = len(response.content)
         content_length = int(response.headers.get("Content-Length", 0))
         SLOG('content_size: {} content_length: {}'.format(content_size, content_length))
-        if content_size == content_length:
+        if content_length == 0 or content_size == content_length:
           return response.content, response.status_code
       else:
         SLOG('status_code: {}'.format(response.status_code))
@@ -352,7 +352,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 elif re.search(r'textstream_\w+=\d+-(\d+)', url):
                   result = download_subs(url, 0, False)
 
-              if not result and addon.getSettingBool('proxy_streams'):# and stype == 'vod':
+              if not result and addon.getSettingBool('proxy_streams') and not 'dashll' in url: # and stype == 'vod':
                 #LOG('*** using proxy for {}'.format(url))
                 result, status_code = download_file(url, timeout=timeout)
 
