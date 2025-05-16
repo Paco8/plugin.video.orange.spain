@@ -469,6 +469,7 @@ class Proxy(object):
         self._httpd_thread = threading.Thread(target=self._server.serve_forever)
         self._httpd_thread.start()
         self.proxyname = 'http://{}:{}'.format(HOST, port)
+        addon.setSetting('proxy_address', self.proxyname)
         self.started = True
         LOG("Proxy Started: {}:{}".format(HOST, port))
 

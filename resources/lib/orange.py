@@ -124,6 +124,7 @@ class Orange(object):
           self.cache.remove_file('subscribed_channels.json')
           self.cache.remove_file('bouquet.json')
           self.cache.remove_file('channels2.json')
+          self.cache.remove_file('subscription.json')
           return
 
     def add_user(self, username, password):
@@ -560,7 +561,7 @@ class Orange(object):
       url = endpoints['get-tvshow-episode-list'].format(season_external_id=id)
       data = self.load_json(url)
       #print_json(data)
-      #self.cache.save_file('episodes.json', json.dumps(data, ensure_ascii=False))
+      #Orange.save_file('/tmp/episodes.json', json.dumps(data, ensure_ascii=False))
 
       for d in data['response']:
         t = {}
@@ -659,6 +660,7 @@ class Orange(object):
     def search_live(self, search_term):
       res = []
       url = endpoints['search-live'].format(text=search_term, device_models=self.device['type'])
+      url += '&channels=' + ','.join(self.subscribed_channels)
       data = self.load_json(url)
       #self.cache.save_file('search_live.json', json.dumps(data, ensure_ascii=False))
       #print_json(data)
@@ -693,9 +695,7 @@ class Orange(object):
 
     def search_vod(self, search_term, content_type):
       res = []
-      #services = "SVODORANGESERIES,SVODTVPLAY,SVODFLIXOLE,SVODSTARZPLAY,SVODCAZA,SVODCLUB,SVODMUSICA,SVODINFANTIL,SVODDEPORTES,SVODLIFESTYLE,SVODMOTOR,SVODFRANCES,SVODANIMACION,OTT_Netflix,OTT_PrimeVideo,OTT_DAZN,OTT_DAZNPremium,OTT_DisneyPlus"
-      services = "SVODORANGESERIES,SVODTEMATIC,SVODCANAL+Series,SVODFLIXOLE,SVODSTARZPLAY,SVODCAZA,SVODCLUB,SVODMUSICA,SVODINFANTIL,SVODDEPORTES,SVODLIFESTYLE,SVODMOTOR,SVODFRANCES,SVODANIMACION,SVODLIGA,SVODBEIN"
-      url = endpoints['search-vod'].format(text=search_term, content_type=content_type, services=services)
+      url = endpoints['search-vod'].format(text=search_term, content_type=content_type, services=','.join(self.entitlements))
       data = self.load_json(url)
       #self.cache.save_file('search_vod.json', json.dumps(data, ensure_ascii=False))
       #print_json(data)
@@ -924,6 +924,34 @@ class Orange(object):
       url = endpoints['get-bouquet-list']
       data = self.load_json(url)
       return data
+
+    def get_subscription_info(self):
+      content = self.cache.load('subscription.json')
+      if content:
+        return json.loads(content)
+
+      url = endpoints['get-household']
+      data = self.load_json(url)
+      client_id = data['response']['username']
+
+      url = endpoints['get-client-data'].format(client_code=client_id)
+      data = self.load_json(url)
+      client_data = json.loads(data['response'])
+
+      url = endpoints['get-household-subscription']
+      data = self.load_json(url)
+      service_plan = data['response']['servicePlanSubscriptionInfoList'][0]['servicePlan']
+      packages = service_plan['channelPackages']
+      packs = []
+      for p in packages:
+        packs.append(p['externalId'])
+      tvpacks = ','.join(packs)
+      res = {'client_id': client_id, 'tvpacks': tvpacks,
+              'bouquet': service_plan['bouquets'][0]['externalId'],
+              'offer': service_plan['externalId'],
+              'available_sp': client_data['available_sp']}
+      self.cache.save_file('subscription.json', json.dumps(res, ensure_ascii=False))
+      return res
 
     def download_channels(self, bouquet):
       url = endpoints['get-channel-list'].format(bouquet_id=bouquet, model_external_id=self.device['type'])
@@ -1231,8 +1259,10 @@ class Orange(object):
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
 
-      url = endpoints['login-rtv'] + '&username=' + self.username
-      data = {'username': self.username, 'password': decode_base64(self.password)}
+      username = self.username
+      if '@' in username: username = 'Orange.' + username
+      url = endpoints['login-rtv'] + '&username=' + username
+      data = {'username': username, 'password': decode_base64(self.password)}
       response = self.net.session.post(url, headers=headers, data=data)
       content = response.content.decode('utf-8')
       #LOG(content)
@@ -1324,17 +1354,20 @@ class Orange(object):
               {'name': 'Últimos 7 días', 'id': 'U7D%20TVPLAY'})
 
     def get_rows(self):
+      subdata = self.get_subscription_info()
+
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
       url = endpoints['get-rows']
 
       data = {
         'services': ','.join(self.entitlements),
-        'tvpacks': '140,3_PRO',
-        'bouquet_id': '3_PRO',
-        'sp': 'SP_OFFER_0000005',
+        'tvpacks': subdata['tvpacks'],
+        'bouquet_id': subdata['bouquet'],
+        'channels': ','.join(self.subscribed_channels),
+        'sp': subdata['offer'],
         'myTeam': 'NA',
-        'available_sp': 'SP_SVA_001,SP_SVA_002,SP_SVA_003,SP_SVA_004,SP_SVA_005,SP_SVA_006,SP_SVA_007,SP_SVA_008,SP_SVA_009,SP_SVA_010,SP_SVA_011,SP_SVA_012,SP_SVA_013,SP_SVA_014,SP_PACK_007,SP_PACK_009,SP_PACK_012,SP_PACK_014,SP_PACK_015,SP_PACK_017,SP_PACK_018,SP_PACK_019,SP_PACK_020,SP_PACK_027,SP_PACK_030,SP_PACK_031',
+        'available_sp': subdata['available_sp'],
         'from': 0,
         'count': 42,
         'external_id': 'Home_Inicio_TVPLAY',
@@ -1356,6 +1389,8 @@ class Orange(object):
             entry_point = e['actions'][0]['entryPoint']
             if 'name' in e and entry_point.startswith('/browsing'):
               res.append({'name':e['name'], 'id': entry_point.replace('/browsing/','')})
+      res.append({'name': 'SkyShowtime - Películas', 'id': 'SKY_10016'})
+      res.append({'name': 'SkyShowtime - Series', 'id': 'SKY_10026'})
       res.append({'name': 'Películas', 'id': 'TVPLAY_14028'})
       return res
 
@@ -1467,3 +1502,11 @@ class Orange(object):
       res.append('</tv>\n')
       with io.open(filename, 'w', encoding='utf-8', newline='') as handle:
         handle.write(''.join(res))
+
+    @staticmethod
+    def save_file(filename, content):
+      if sys.version_info[0] < 3:
+        if not isinstance(content, unicode):
+          content = unicode(content, 'utf-8')
+      with io.open(filename, 'w', encoding='utf-8') as handle:
+        handle.write(content)

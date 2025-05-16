@@ -13,6 +13,7 @@
         <setting type="sep"/>
         <setting label="30450" type="action" id="donation" action="RunPlugin(plugin://plugin.video.orange.spain?action=show_donation_dialog)" option="close"/>
         -->
+        <setting id="proxy_address" type="text" label="" value="" default="" visible="false"/>
     </category>
     <category label="30004">
         <setting id="use_ttml2ssa" type="bool" label="$ADDON[script.module.ttml2ssa 32202]" default="false"/>

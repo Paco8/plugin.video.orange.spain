@@ -102,7 +102,7 @@ def play(params):
       playback_url = playback_url.replace('Profil2', 'Profil3')
 
     manifest_url = playback_url
-    proxy = o.cache.load_file('proxy.conf')
+    proxy = addon.getSetting('proxy_address')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
       playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
 
@@ -366,7 +366,7 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
       list_item.setInfo('video', t['info'])
 
       if t['info']['mediatype'] == 'episode':
-        list_item.setArt({'thumb': t['art']['thumb']})
+        list_item.setArt({'thumb': t['art'].get('thumb')})
       else:
         list_item.setArt(t['art'])
 

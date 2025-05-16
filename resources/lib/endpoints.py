@@ -48,4 +48,7 @@ endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_
              'mark-position-recording': API_RTV + 'MarkRecordingPosition?recording_id={recording_id}&position={position}&client=json',
              'get-viewing-positions': API_URL + 'pcw/v1/viewingPositions?offset={offset}&limit={limit}&maxPrLevel=8&viewType=next-to-watch&viewSource={view_source}&client=json',
              'get-rows': 'https://msn.orangetv.orange.es/pc/api/msn/v2/getRows',
+             'get-household': API_RTV + 'GetHousehold?client=json',
+             'get-household-subscription': API_RTV + 'GetHouseholdSubscriptions?client=json',
+             'get-client-data': API_RTV + 'GetClientData?client_code={client_code}&key=household_info&client=json'
             }
