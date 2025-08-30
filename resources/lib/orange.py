@@ -601,6 +601,7 @@ class Orange(object):
         url = endpoints['get-unified-list'].format(external_category_id=id)
         data = self.load_json(url)
         self.cache.save_file(filename, json.dumps(data, ensure_ascii=False))
+      #Orange.save_file('/tmp/list.json', content)
 
       for d in data['response']:
         t = {}
@@ -655,6 +656,60 @@ class Orange(object):
         t['url'] = 'https://orangetv.orange.es/vps/dyn/' + t['id'] + '?bci=otv-2'
         res.append(t)
 
+      return res
+
+    def get_category_list2(self, id):
+      subdata = self.get_subscription_info()
+      headers = self.net.headers.copy()
+      headers['Cookie'] =  self.cookie
+      url = endpoints['browsing']
+
+      data = {
+        'services': ','.join(self.entitlements),
+        'tvpacks': subdata['tvpacks'],
+        'bouquet_id': subdata['bouquet'],
+        'channels': ','.join(self.subscribed_channels),
+        'sp': subdata['offer'],
+        'myTeam': 'NA',
+        'available_sp': subdata['available_sp'],
+        'from': 0,
+        'count': 999,
+        'external_id': id,
+        'resolution': 'SD,HD',
+        'device_type': 'PC',
+      }
+      #print_json(data)
+      response = self.net.session.post(url, headers=headers, json=data)
+      content = response.content.decode('utf-8')
+      #Orange.save_file('/tmp/browse.json', content)
+      data = json.loads(content)
+
+      res = []
+      for d in data.get('elements', []):
+        if d['type'] in ['movie', 'serie']:
+          t = {'info': {}, 'type': 'movie'}
+          t['info']['title'] = d['name']
+          t['info']['mediatype'] = 'movie'
+          t['id'] = d['actions'][0]['entryPoint'].rsplit('/', 1)[-1]
+          t['info']['plot'] = d['metadata']['description']
+          t['art'] = {'poster': API_IMAGES + d['image']}
+          if d['type'] == 'movie':
+            t['type'] = 'movie'
+            t['stream_type'] = 'u7d' if 'U7D' in t['id'] else 'vod'
+            t['info']['mediatype'] = 'movie'
+            if 'assetExternalId' in d:
+              t['info_id'] = d['assetExternalId']
+              t['wl_id'] = t['info_id']
+          else:
+            t['type'] = 'series'
+            t['info']['mediatype'] = 'tvshow'
+            t['info_id'] = d['seriesExternalId']
+            t['wl_id'] = t['info_id']
+          res.append(t)
+      for d in data.get('rows', []):
+        if d['type'] in ['horizontal', 'vertical']:
+          t = {'info': {}, 'type': 'category', 'id': d['id'], 'info':{'title': d['title']}}
+          res.append(t)
       return res
 
     def search_live(self, search_term):
@@ -1338,7 +1393,7 @@ class Orange(object):
       self.cache.save_file('searchs.json', json.dumps(self.search_list, ensure_ascii=False))
 
     def main_listing(self):
-      return ({'name': 'AMC+', 'id': 'AMC_PLUS_10002'},
+      l =    ({'name': 'AMC+', 'id': 'AMC_PLUS_10002'},
               {'name': 'AMC Selekt', 'id': 'AMC_10002'},
               {'name': 'Universal+', 'id': 'UNIV_10000'},
               #{'name': 'Canal Series', 'id': 'SED_15696'},
@@ -1352,10 +1407,18 @@ class Orange(object):
               #{'name': 'Movistar Series 2', 'id': 'SED_13040'},
               {'name': 'Películas', 'id': 'TVPLAY_14028'},
               {'name': 'Últimos 7 días', 'id': 'U7D%20TVPLAY'})
+      res = []
+      for i in l:
+        res.append({'id': i['id'], 'info':{'title':i['name']}, 'type': 'category'})
+      return res
 
-    def get_rows(self):
+    def get_rows(self, id):
+      filename = 'cache/ROW_' + id + '.json'
+      content = self.cache.load(filename)
+      if content:
+        return json.loads(content)
+
       subdata = self.get_subscription_info()
-
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
       url = endpoints['get-rows']
@@ -1370,28 +1433,46 @@ class Orange(object):
         'available_sp': subdata['available_sp'],
         'from': 0,
         'count': 42,
-        'external_id': 'Home_Inicio_TVPLAY',
+        'external_id': id,
         'resolution': 'SD,HD',
         'device_type': 'PC',
       }
       #print_json(data)
       response = self.net.session.post(url, headers=headers, json=data)
       content = response.content.decode('utf-8')
+      #Orange.save_file('/tmp/rows.json', content)
       data = json.loads(content)
-      return data
-
-    def get_vod_catalog(self):
-      data = self.get_rows()
       res = []
       for i in data['rows']:
         if 'title' in i and len(i['elements']) > 0:
           for e in i['elements']:
+            if not 'actions' in e: continue
+            #print_json(e)
             entry_point = e['actions'][0]['entryPoint']
-            if 'name' in e and entry_point.startswith('/browsing'):
-              res.append({'name':e['name'], 'id': entry_point.replace('/browsing/','')})
-      res.append({'name': 'SkyShowtime - Películas', 'id': 'SKY_10016'})
-      res.append({'name': 'SkyShowtime - Series', 'id': 'SKY_10026'})
-      res.append({'name': 'Películas', 'id': 'TVPLAY_14028'})
+            if e['type'] == 'seeAll' and ('browsing' in entry_point or 'getRows' in entry_point):
+              #print(e)
+              id = entry_point.rsplit('/', 1)[-1]
+              t = {'info':{}, 'id':id}
+              name = i['title']
+              if 'buttonLabel' in e['actions'][0] and e['actions'][0]['buttonLabel'] != i['title']:
+                name = name + ' - ' + e['actions'][0]['buttonLabel']
+              elif 'name' in e and e['name'] != i['title']:
+                name = name +' - ' + e['name']
+              t['info']['title'] = name
+              if 'browsing' in entry_point:
+                t['type'] = 'category'
+                res.append(t)
+              elif 'getRows' in entry_point:
+                t['type'] = 'row'
+                res.append(t)
+      self.cache.save_file(filename, json.dumps(res, ensure_ascii=False))
+      return res
+
+    def get_vod_catalog(self, row_id='Home_Inicio_TVPLAY'):
+      res = self.get_rows('Home_Inicio_TVPLAY')
+      #res.append({'info':{'title': 'SkyShowtime - Películas'}, 'id': 'SKY_10016', 'type': 'category'})
+      #res.append({'info':{'title': 'SkyShowtime - Series'}, 'id': 'SKY_10026', 'type': 'category'})
+      res.append({'info':{'title': 'Películas'}, 'id': 'TVPLAY_14028', 'type': 'category'})
       return res
 
     def export_channels(self):

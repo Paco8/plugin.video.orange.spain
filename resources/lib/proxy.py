@@ -52,6 +52,7 @@ kodi_version= int(xbmc.getInfoLabel('System.BuildVersion')[:2])
 
 previous_tokens = []
 manifest_base_url = ''
+manifest_urls = {}
 stype = ''
 manifest_type = None
 subtrack_ids = []
@@ -220,17 +221,22 @@ class RequestHandler(BaseHTTPRequestHandler):
               timeout = addon.getSettingInt('proxy_timeout') / 1000
               LOG('proxy timeout: {}'.format(timeout))
 
-              global stype, manifest_type
+              global stype, manifest_type, manifest_urls
               pos = path.find('?')
               path = path[pos+1:]
               params = dict(parse_qsl(path))
               LOG('params: {}'.format(params))
-              url = params['manifest']
+              orig_url = url = params['manifest']
               stype = params['stype']
+              request_id = params['request_id']
               manifest_type = 'mpd' if '.mpd' in path else 'ism'
               LOG('url: {}'.format(url))
               LOG('stype: {}'.format(stype))
               LOG('manifest_type: {}'.format(manifest_type))
+
+              #LOG(manifest_urls)
+              if request_id in manifest_urls:
+                url = manifest_urls[request_id]
 
               response = session.get(url, allow_redirects=True)
               LOG('headers: {}'.format(response.headers))
@@ -240,6 +246,11 @@ class RequestHandler(BaseHTTPRequestHandler):
               global manifest_base_url, subtrack_ids
               manifest_base_url = baseurl
               content = response.content.decode('utf-8')
+              LOG('status_code: {}'.format(response.status_code))
+              #LOG(content)
+
+              if response.status_code == 200:
+                manifest_urls[request_id] = response.url
 
               if manifest_type == 'ism':
                 """ ISM manifest """

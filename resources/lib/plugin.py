@@ -104,7 +104,7 @@ def play(params):
     manifest_url = playback_url
     proxy = addon.getSetting('proxy_address')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
-      playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
+      playback_url = '{}/?manifest={}&stype={}&request_id={}'.format(proxy, quote_plus(playback_url), stype, time.time())
 
     LOG('url: {} token: {}'.format(playback_url, token))
 
@@ -449,18 +449,17 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
       xbmcplugin.addDirectoryItem(_handle, get_url(action='season', id=t['id'], name=title_name), list_item, True)
     elif t['type'] == 'category':
       list_item = xbmcgui.ListItem(label = title_name)
-      #list_item.setInfo('video', t['info'])
-      #list_item.setArt(t['art'])
       id = t['entry_point'] if 'entry_point' in t else t['id']
       xbmcplugin.addDirectoryItem(_handle, get_url(action='category', id=id, name=title_name), list_item, True)
+    elif t['type'] == 'row':
+      list_item = xbmcgui.ListItem(label = title_name)
+      xbmcplugin.addDirectoryItem(_handle, get_url(action='row', id=t['id'], name=title_name), list_item, True)
 
   xbmcplugin.endOfDirectory(_handle, cacheToDisc=cacheToDisc)
 
-def list_vod():
+def list_rows(rows):
   open_folder(addon.getLocalizedString(30111)) # VOD
-  #listing = o.main_listing()
-  listing = o.get_vod_catalog()
-  for l in listing:
+  for l in rows:
     name = l['name']
     add_menu_option(name, get_url(action='category', name=name, id=l['id']))
   close_folder()
@@ -727,6 +726,8 @@ def router(paramstring):
       add_videos(params['name'], 'episodes', o.get_episodes(params['id']))
     elif params['action'] == 'category':
       add_videos(params['name'], 'movies', o.get_category_list(params['id']))
+    elif params['action'] == 'row':
+      add_videos(params['name'], 'movies', o.get_rows(params['id']))
     elif params['action'] == 'tv':
       if addon.getSettingBool('channels_with_epg'):
         videos = o.get_channels_list_with_epg()
@@ -734,7 +735,7 @@ def router(paramstring):
         videos = o.get_channels_list()
       add_videos(addon.getLocalizedString(30104), 'movies', videos)
     elif params['action'] == 'vod':
-      list_vod()
+      add_videos(addon.getLocalizedString(30111), 'movies', o.get_vod_catalog())
     elif params['action'] == 'user':
       list_users(params)
     elif params['action'] == 'devices':

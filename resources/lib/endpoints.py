@@ -50,5 +50,6 @@ endpoints = {'get-video': API_RTV + 'GetVideo?client=json&external_id={external_
              'get-rows': 'https://msn.orangetv.orange.es/pc/api/msn/v2/getRows',
              'get-household': API_RTV + 'GetHousehold?client=json',
              'get-household-subscription': API_RTV + 'GetHouseholdSubscriptions?client=json',
-             'get-client-data': API_RTV + 'GetClientData?client_code={client_code}&key=household_info&client=json'
+             'get-client-data': API_RTV + 'GetClientData?client_code={client_code}&key=household_info&client=json',
+             'browsing': 'https://msn.orangetv.orange.es/pc/api/msn/v2/browsing'
             }
