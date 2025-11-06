@@ -14,6 +14,11 @@ class Network(object):
   headers = {}
   session = MySession()
 
+  def get_request(self, url, headers = None):
+    if headers is None: headers = self.headers
+    response = self.session.get(url, headers=headers, allow_redirects=True)
+    return response
+
   def load_url(self, url, headers = None):
     if headers is None: headers = self.headers
     response = self.session.get(url, headers=headers, allow_redirects=True)

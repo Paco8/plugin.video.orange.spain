@@ -31,6 +31,7 @@ class Orange(object):
 
     cookie = ''
     device = {'id': '', 'type': 'SmartTV'}
+    profile_id = None
     hd_devices = ['SmartTV', 'SmartTV_Android', 'FireTV', 'Chromecast', 'GoogleStick', 'AKS19']
 
     add_extra_info = False
@@ -65,6 +66,11 @@ class Orange(object):
         u = json.loads(data)
         self.username = u['username']
         self.password = u['password']
+
+      # Profile
+      data = self.cache.load_file('profile_id.conf')
+      if data:
+        self.profile_id = data
 
       self.logged = self.login()
       if not self.logged:
@@ -125,6 +131,7 @@ class Orange(object):
           self.cache.remove_file('bouquet.json')
           self.cache.remove_file('channels2.json')
           self.cache.remove_file('subscription.json')
+          self.cache.remove_file('profile_id.conf')
           return
 
     def add_user(self, username, password):
@@ -1300,6 +1307,23 @@ class Orange(object):
         identity = m.group(1)
       return identity
 
+    def get_profiles(self):
+      url = endpoints['get-profile-list']
+      data = self.load_json(url)
+      base_img_url = 'https://pc.orangetv.orange.es/pc/api/rtv/v1/images/attachments_new/profiles/Orange'
+      res = []
+      for i in data['response']:
+        img_url = base_img_url
+        if i['image'].startswith('/default'):
+          img_url += '/defaultImages'
+        p = {'name': i['name'], 'id': str(i['id']), 'image': img_url + i['image']}
+        res.append(p)
+      return res
+
+    def change_profile(self, id):
+      self.profile_id = id
+      self.cache.save_file('profile_id.conf', self.profile_id)
+
     def login(self):
       # Load cookie from cache
       cookie = self.cache.load('cookie.conf', 1*60)
@@ -1355,13 +1379,16 @@ class Orange(object):
       headers['Cookie'] = new_cookie
 
       # Profile
-      url = endpoints['get-profile-list']
-      data = self.net.load_data(url, headers)
-      #print_json(data)
-      if len(data['response']) > 0:
-        profile_id = str(data['response'][0]['id'])
+      if not self.profile_id:
+        url = endpoints['get-profile-list']
+        data = self.net.load_data(url, headers)
+        #print_json(data)
+        if len(data['response']) > 0:
+          self.profile_id = str(data['response'][0]['id'])
+          self.cache.save_file('profile_id.conf', self.profile_id)
 
-        url = endpoints['login-reco'] + '&profile_id=' + profile_id
+      if self.profile_id:
+        url = endpoints['login-reco'] + '&profile_id=' + self.profile_id
         data = self.net.load_data(url, headers)
         #print_json(data)
         if data['response']['status'] != 'SUCCESS':
@@ -1436,6 +1463,9 @@ class Orange(object):
         'external_id': id,
         'resolution': 'SD,HD',
         'device_type': 'PC',
+        'profile_type': 'general',
+        'profileId': self.profile_id,
+        'version': 1,
       }
       #print_json(data)
       response = self.net.session.post(url, headers=headers, json=data)
@@ -1468,8 +1498,53 @@ class Orange(object):
       self.cache.save_file(filename, json.dumps(res, ensure_ascii=False))
       return res
 
+    def get_elements(self, external_id, row_id):
+      filename = 'cache/ELEMENT_' + external_id + '_' + row_id + '.json'
+      content = self.cache.load(filename)
+      if content:
+        return json.loads(content)
+
+      subdata = self.get_subscription_info()
+      headers = self.net.headers.copy()
+      headers['Cookie'] =  self.cookie
+      url = endpoints['get-elements']
+
+      data = {
+        'services': ','.join(self.entitlements),
+        'tvpacks': subdata['tvpacks'],
+        'bouquet_id': subdata['bouquet'],
+        'channels': ','.join(self.subscribed_channels),
+        'sp': subdata['offer'],
+        'myTeam': 'NA',
+        'available_sp': subdata['available_sp'],
+        'from': 0,
+        'count': 42,
+        'external_id': external_id,
+        'row_id': row_id,
+        'resolution': 'SD,HD',
+        'device_type': 'PC',
+        'profile_type': 'general',
+        'profileId': self.profile_id,
+        'version': 1,
+      }
+      #print_json(data)
+      response = self.net.session.post(url, headers=headers, json=data)
+      content = response.content.decode('utf-8')
+      #Orange.save_file('/tmp/elements.json', content)
+      data = json.loads(content)
+      res = []
+      for i in data['elements']:
+        if 'actionsOnEvents' in i:
+          for e in i['actionsOnEvents']:
+            if e['event'] == 'onClick':
+              action = e['action']
+              if action.startswith('/browsing'):
+                res.append({'info':{'title': i['name']}, 'id': action.replace('/browsing/',''), 'type': 'category'})
+      return res
+
     def get_vod_catalog(self, row_id='Home_Inicio_TVPLAY'):
-      res = self.get_rows('Home_Inicio_TVPLAY')
+      #res = self.get_rows('Home_Inicio_TVPLAY')
+      res = self.get_elements('Home_Inicio', 'EDITORIAL_REVAMP_ROW_CHIPS')
       #res.append({'info':{'title': 'SkyShowtime - Películas'}, 'id': 'SKY_10016', 'type': 'category'})
       #res.append({'info':{'title': 'SkyShowtime - Series'}, 'id': 'SKY_10026', 'type': 'category'})
       res.append({'info':{'title': 'Películas'}, 'id': 'TVPLAY_14028', 'type': 'category'})

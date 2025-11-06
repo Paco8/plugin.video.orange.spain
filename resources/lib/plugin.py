@@ -102,9 +102,17 @@ def play(params):
       playback_url = playback_url.replace('Profil2', 'Profil3')
 
     manifest_url = playback_url
+
+    # Download manifest
+    manifest_content = None
+    response = o.net.get_request(manifest_url)
+    if response.status_code == 200:
+        playback_url = response.url
+        manifest_content = response.content.decode('utf-8')
+
     proxy = addon.getSetting('proxy_address')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
-      playback_url = '{}/?manifest={}&stype={}&request_id={}'.format(proxy, quote_plus(playback_url), stype, time.time())
+      playback_url = '{}/?manifest={}&stype={}'.format(proxy, quote_plus(playback_url), stype)
 
     LOG('url: {} token: {}'.format(playback_url, token))
 
@@ -212,8 +220,12 @@ def play(params):
     if not os.path.exists(subfolder):
       os.makedirs(subfolder)
 
-    response = o.net.session.get(manifest_url, allow_redirects=True)
-    content = response.content.decode('utf-8')
+    if manifest_content:
+      content = manifest_content
+    else:
+      response = o.net.get_request(manifest_url)
+      content = response.content.decode('utf-8')
+
     #LOG(content)
     baseurl = os.path.dirname(response.url)
     LOG('baseurl: {}'.format(baseurl))
@@ -694,6 +706,31 @@ def export_epg_now():
     show_notification(addon.getLocalizedString(30311), xbmcgui.NOTIFICATION_INFO)
     o.export_epg_to_xml(epg_filename)
 
+def list_profiles(params):
+  LOG('list_profiles: params: {}'.format(params))
+
+  profiles = o.get_profiles()
+
+  if 'id' in params:
+    if params['name'] == 'select':
+      LOG('Selecting profile {}'.format(params['id']))
+      o.change_profile(params['id'])
+      o.cache.remove_file('cookie.conf')
+      o.login()
+    xbmc.executebuiltin("Container.Refresh")
+    return
+
+  open_folder(addon.getLocalizedString(30180)) # Profiles
+  for p in profiles:
+    name = p['name']
+    if p['id'] == o.profile_id:
+      name = '[B][COLOR blue]' + name + '[/COLOR][/B]'
+    img_url = p['image']
+    art = {'icon': img_url} if img_url else None
+    select_action = get_url(action='profiles', id=p['id'], name='select')
+    add_menu_option(name, select_action, art=art)
+  close_folder(cacheToDisc=False)
+
 def router(paramstring):
   """
   Router function that calls other functions
@@ -740,6 +777,8 @@ def router(paramstring):
       list_users(params)
     elif params['action'] == 'devices':
       list_devices(params)
+    elif params['action'] == 'profiles':
+      list_profiles(params)
     elif params['action'] == 'search':
       search(params)
     elif params['action'] == 'add_recording':
@@ -775,6 +814,7 @@ def router(paramstring):
       add_menu_option(addon.getLocalizedString(30122), get_url(action='continue-watching'), icon='continue.png') # Continue watching
       add_menu_option(addon.getLocalizedString(30111), get_url(action='vod'), icon='vod.png') # VOD
       add_menu_option(addon.getLocalizedString(30112), get_url(action='search'), icon='search.png') # Search
+      add_menu_option(addon.getLocalizedString(30180), get_url(action='profiles'), icon='profiles.png') # Profiles
       add_menu_option(addon.getLocalizedString(30108), get_url(action='devices'), icon='devices.png') # Devices
 
     # Accounts
