@@ -411,7 +411,8 @@ class Orange(object):
         if t['stream_type'] == 'vod':
           t['subscribed'] = len(data['availabilities']) > 0
         elif t['stream_type'] == 'u7d':
-          t['subscribed'] = self.is_subscribed_channel(data['sourceChannelId'])
+          if 'sourceChannelId' in data:
+            t['subscribed'] = self.is_subscribed_channel(data['sourceChannelId'])
         if 'externalContentId' in data:
           t['info_id'] = data['externalContentId']
           t['wl_id'] = t['info_id']
@@ -439,7 +440,7 @@ class Orange(object):
 
       url = endpoints['get-profile-wishlist']
       data = self.load_json(url)
-      #self.cache.save_file('wishlist.json', json.dumps(data, ensure_ascii=False))
+      #self.save_file('/tmp/wishlist.json', json.dumps(data, ensure_ascii=False))
 
       for d in data['response']:
         t = self.get_title(d)
