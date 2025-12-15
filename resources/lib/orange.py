@@ -1095,6 +1095,13 @@ class Orange(object):
                 t['playback_url'] += '?' + pars['params']['providerParams']['provider_channel_params']
             except:
               pass
+          elif f['name'] == 'channelDASContextParameters':
+            try:
+              pars = json.loads(f['value'])
+              if 'bpkio_serviceid' in pars:
+                t['bpkio_serviceid'] = pars['bpkio_serviceid']
+            except:
+              pass
         res.append(t)
       return res
 

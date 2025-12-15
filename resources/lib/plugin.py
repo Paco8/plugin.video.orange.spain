@@ -101,6 +101,10 @@ def play(params):
       playback_url = playback_url.replace('Profil1', 'Profil3')
       playback_url = playback_url.replace('Profil2', 'Profil3')
 
+    if 'bpkio_serviceid' in params:
+      sep = '&' if '?' in playback_url else '?'
+      playback_url += sep + 'bpkio_serviceid=' + params['bpkio_serviceid']
+
     manifest_url = playback_url
 
     # Download manifest
@@ -431,6 +435,9 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
 
       if 'playback_url' in t:
         url += '&playback_url=' + quote_plus(t['playback_url'])
+
+      if 'bpkio_serviceid' in t and 'live' in t['bpkio_serviceid']:
+        url += '&bpkio_serviceid=' + t['bpkio_serviceid']['live']
 
       if len(menu_items) > 0:
         list_item.addContextMenuItems(menu_items)

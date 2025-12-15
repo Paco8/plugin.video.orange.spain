@@ -264,6 +264,13 @@ class RequestHandler(BaseHTTPRequestHandler):
                 LOG('subtrack_ids: {}'.format(subtrack_ids))
               elif manifest_type == 'mpd':
                 """ MPD manifest """
+                m = re.search(r'<BaseURL>\s*([^<]+?)\s*</BaseURL>', content)
+                if m:
+                  mpd_baseurl = m.group(1)
+                  LOG('MPD BaseURL: {}'.format(mpd_baseurl))
+                  if mpd_baseurl.startswith('..'):
+                    content = re.sub(r'<BaseURL[^>]*>.*?</BaseURL>', '', content, flags=re.DOTALL)
+
                 if addon.getSettingBool('fix_languages'):
                   content = content.replace('lang="qaa"', 'lang="en"')
                   content = content.replace('lang="qha"', 'lang="es"')
