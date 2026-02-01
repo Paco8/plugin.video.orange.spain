@@ -103,7 +103,8 @@ def play(params):
 
     if 'bpkio_serviceid' in params:
       sep = '&' if '?' in playback_url else '?'
-      playback_url += sep + 'bpkio_serviceid=' + params['bpkio_serviceid']
+      device_id = o.device['id']
+      playback_url += sep + 'bpkio_serviceid={}&channelId={}&serviceType=LIVE&accountId={}&bpkio_did={}'.format(params['bpkio_serviceid'], id, device_id, device_id)
 
     manifest_url = playback_url
 
@@ -437,7 +438,8 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
         url += '&playback_url=' + quote_plus(t['playback_url'])
 
       if 'bpkio_serviceid' in t and 'live' in t['bpkio_serviceid']:
-        url += '&bpkio_serviceid=' + t['bpkio_serviceid']['live']
+        if t['bpkio_serviceid']['stov'] == "":
+          url += '&bpkio_serviceid=' + t['bpkio_serviceid']['live']
 
       if len(menu_items) > 0:
         list_item.addContextMenuItems(menu_items)
