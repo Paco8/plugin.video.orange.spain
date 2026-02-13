@@ -1102,6 +1102,8 @@ class Orange(object):
                 t['bpkio_serviceid'] = pars['bpkio_serviceid']
             except:
               pass
+          elif f['name'] == 'channelDAS':
+              t['channelDAS'] = (f['value'] == 'true')
         res.append(t)
       return res
 

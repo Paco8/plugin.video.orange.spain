@@ -438,7 +438,7 @@ def add_videos(category, ctype, videos, from_wishlist=False, cacheToDisc=True):
         url += '&playback_url=' + quote_plus(t['playback_url'])
 
       if 'bpkio_serviceid' in t and 'live' in t['bpkio_serviceid']:
-        if t['bpkio_serviceid']['stov'] == "":
+        if t.get('channelDAS', False):
           url += '&bpkio_serviceid=' + t['bpkio_serviceid']['live']
 
       if len(menu_items) > 0:
