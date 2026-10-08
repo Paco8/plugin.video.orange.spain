@@ -39,12 +39,14 @@ class Orange(object):
     def __init__(self, config_directory):
       # Network
       headers = {
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'es-ES,es;q=0.9',
         'Origin': 'https://orangetv.orange.es',
         'Referer': 'https://orangetv.orange.es/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
         'User-Agent': useragent,
-        #'User-Agent': 'okhttp/4.10.0',
       }
       self.net = Network()
       self.net.headers = headers
@@ -1353,6 +1355,7 @@ class Orange(object):
       url = endpoints['login-rtv'] + '&username=' + username
       data = {'username': username, 'password': decode_base64(self.password)}
       response = self.net.session.post(url, headers=headers, data=data)
+      LOG('response status: {}'.format(response.status_code))
       content = response.content.decode('utf-8')
       #LOG(content)
       data = json.loads(content)
