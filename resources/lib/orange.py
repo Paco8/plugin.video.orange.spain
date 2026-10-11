@@ -230,7 +230,7 @@ class Orange(object):
         return str(uuid.uuid4()).upper()
 
       serial_number = ''
-      if   device_type == 'SmartTV':
+      if device_type in ['SmartTV', 'SmartTV_Android', 'GoogleStick']:
         serial_number = 'OTVATV' + random_str()
       elif device_type == 'FireTV':
         serial_number = 'OTVAMZ' + random_str()
@@ -242,7 +242,7 @@ class Orange(object):
         serial_number = uuid_str()
       return serial_number
 
-    def register_device(self, serial_number = None, name = None, device_type = 'SmartTV'):
+    def register_device(self, serial_number = None, name = None, device_type = 'SmartTV_Android'):
       if not serial_number:
         serial_number = self.create_serial_number(device_type)
       if not name:
