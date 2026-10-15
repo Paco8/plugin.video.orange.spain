@@ -1679,3 +1679,23 @@ class Orange(object):
           content = unicode(content, 'utf-8')
       with io.open(filename, 'w', encoding='utf-8') as handle:
         handle.write(content)
+
+    def resolve_manifest(self, manifest_url, retries=3, timeout=(3, 5), wait=1):
+        """Devuelve la URL final tras las redirecciones, o None si falla."""
+        for attempt in range(1, retries + 1):
+            response = None
+            try:
+                response = self.net.get_request(manifest_url, stream=True, timeout=timeout)
+                LOG('manifest GET #{}: status={} url={}'.format(
+                    attempt, response.status_code, response.url))
+                if response.status_code == 200:
+                    return response.url
+                LOG('manifest GET #{} body: {}'.format(attempt, response.text[:300]))
+            except Exception as e:
+                LOG('manifest GET #{} error: {}'.format(attempt, e))
+            finally:
+                if response is not None:
+                    response.close()
+            if attempt < retries:
+                time.sleep(wait)
+        return None

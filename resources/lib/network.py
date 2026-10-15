@@ -14,9 +14,9 @@ class Network(object):
   headers = {}
   session = MySession()
 
-  def get_request(self, url, headers = None):
+  def get_request(self, url, headers = None, stream=False, timeout=None):
     if headers is None: headers = self.headers
-    response = self.session.get(url, headers=headers, allow_redirects=True)
+    response = self.session.get(url, headers=headers, allow_redirects=True, stream=stream, timeout=timeout)
     return response
 
   def load_url(self, url, headers = None):

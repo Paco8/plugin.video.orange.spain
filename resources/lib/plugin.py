@@ -110,12 +110,14 @@ def play(params):
 
     manifest_url = playback_url
 
-    # Download manifest
+    # Resolve manifest url
     manifest_content = None
-    response = o.net.get_request(manifest_url)
-    if response.status_code == 200:
-        playback_url = response.url
-        manifest_content = response.content.decode('utf-8')
+    resolved_url = o.resolve_manifest(manifest_url)
+    if resolved_url:
+      playback_url = resolved_url
+    elif stype == 'tv':
+      show_notification('No se pudo obtener el manifiesto')
+      return
 
     proxy = addon.getSetting('proxy_address')
     if manifest_type in ['ism', 'mpd'] and addon.getSettingBool('manifest_modification') and proxy:
