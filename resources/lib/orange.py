@@ -47,6 +47,7 @@ class Orange(object):
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Site': 'same-site',
         'User-Agent': useragent,
+        'Accept-Encoding': 'gzip, deflate, br'
       }
       self.net = Network()
       self.net.headers = headers
@@ -1349,6 +1350,7 @@ class Orange(object):
       # Get new cookie
       headers = self.net.headers.copy()
       headers['Cookie'] =  self.cookie
+      #print_json(headers)
 
       username = self.username
       if '@' in username: username = 'Orange.' + username

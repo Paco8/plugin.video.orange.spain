@@ -132,6 +132,8 @@ def play(params):
   headers = {
        'User-Agent': useragent,
        'Accept': '*/*',
+       'Accept-Language': 'es-ES,es;q=0.9',
+       'Accept-Encoding': 'gzip, deflate, br',
        'Origin': 'https://orangetv.orange.es',
        'Referer': 'https://orangetv.orange.es/',
        'Sec-Fetch-Dest': 'empty',
