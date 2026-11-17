@@ -325,7 +325,7 @@ def play(params):
     if last_pos > interval:
       send_position(last_pos)
 
-  elif stype == 'tv' and id in ['11013', '11026', '11077', '1023', '1050', '1051']:
+  elif False: #stype == 'tv' and id in ['11013', '11026', '11077', '1023', '1050', '1051']:
     household_id = o.cache.load_file('household_id.conf')
     if household_id:
       last_time = 0 #time.time()
